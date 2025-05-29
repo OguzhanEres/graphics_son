@@ -14,7 +14,7 @@ const keys = { w: false, a: false, s: false, d: false };
 const moveSpeed = 0.15; // Diğer modeller için
 const walkingCharacterSpeed = 0.05; // Walking karakteri için minimum hız
 let loadedModels = 0;
-const totalModels = 3; // 3 model olacak (WalkingModel kaldırıldı)
+const totalModels = 5; // Statue + 3 Piramit + WalkingCharacter
 
 // Animasyon için yeni değişkenler
 let mixer; // Hurricane_Kick için animasyon mixer'ı
@@ -223,6 +223,9 @@ function setupLighting() {
     window.rotationSpeed = 1.0;
     window.lightRadius = 15;
     window.lightAngle = 0;
+    window.sunHeight = 10; // Güneşin yüksekliği
+    window.dayDuration = 60; // Bir gün süresi (saniye)
+    window.currentTime = 6; // Günün saati (0-24)
 }
 
 function createGround() {
@@ -255,8 +258,8 @@ function loadModels() {
         './Statue_egypt1/fbxStatue.fbx',
         (object) => {
             console.log('Statue yüklendi:', object);
-            object.position.set(-4, 0, 0);
-            object.scale.set(0.5, 0.5, 0.5);
+            object.position.set(-14, 0, 3);
+            object.scale.set(0.7, 0.7, 0.7);
             
             // Gölgeleri etkinleştir
             object.traverse((child) => {
@@ -294,13 +297,12 @@ function loadModels() {
         }
     );
     
-   
-    fbxLoader.load(
+     fbxLoader.load(
         './Free_pyramid/fbxPyra.fbx',
         (object) => {
             console.log('Pyramid yüklendi:', object);
-            object.position.set(4, 0, 0);
-            object.scale.set(0.5, 0.5, 0.5);
+            object.position.set(10, 0, 0);
+            object.scale.set(0.8, 0.8, 0.8); // Gizli mezar girişi olan piramit - daha büyük
             
             object.traverse((child) => {
                 if (child.isMesh) {
@@ -329,12 +331,96 @@ function loadModels() {
         (progress) => {
             console.log('Pyramid yükleme:', (progress.loaded / progress.total * 100) + '%');
             updateLoadingProgress(1, progress.loaded / progress.total);
+        },        (error) => {
+            console.error('Pyramid yüklenemedi:', error);
+            addPlaceholderModel(10, 0, 0, 'Pyramid', 0x00ff00);
+            onModelLoaded();
+        }    );      
+    
+    // İkinci Piramit
+    fbxLoader.load(
+        './Free_pyramid/fbxPyra.fbx',
+        (object) => {
+            console.log('Pyramid2 yüklendi:', object);
+            object.position.set(-5, 0, 15);
+            object.scale.set(0.3, 0.3, 0.3);
+            
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => {
+                                mat.side = THREE.FrontSide;
+                                if (mat.map) mat.map.flipY = false;
+                            });
+                        } else {
+                            child.material.side = THREE.FrontSide;
+                            if (child.material.map) child.material.map.flipY = false;
+                        }
+                    }
+                }
+            });
+            
+            object.name = 'Pyramid2';
+            scene.add(object);
+            models.push(object);
+            onModelLoaded();
+        },        (progress) => {
+            console.log('Pyramid2 yükleme:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(2, progress.loaded / progress.total);
         },
         (error) => {
-            console.error('Pyramid yüklenemedi:', error);
-            addPlaceholderModel(4, 0, 0, 'Pyramid', 0x00ff00);
+            console.error('Pyramid2 yüklenemedi:', error);
+            addPlaceholderModel(-10, 0, 10, 'Pyramid2', 0x00ff00);
             onModelLoaded();
-        }    );      // Animasyonlu Walking model - Yeni animasyon sistemi ile
+        }
+    );
+    
+    // Üçüncü Piramit
+    fbxLoader.load(
+        './Free_pyramid/fbxPyra.fbx',
+        (object) => {
+            console.log('Pyramid3 yüklendi:', object);
+            object.position.set(-10, 0, -15);
+            object.scale.set(0.5, 0.5, 0.5);
+            
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => {
+                                mat.side = THREE.FrontSide;
+                                if (mat.map) mat.map.flipY = false;
+                            });
+                        } else {
+                            child.material.side = THREE.FrontSide;
+                            if (child.material.map) child.material.map.flipY = false;
+                        }
+                    }
+                }
+            });
+            
+            object.name = 'Pyramid3';
+            scene.add(object);
+            models.push(object);
+            onModelLoaded();
+        },
+        (progress) => {
+            console.log('Pyramid3 yükleme:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(3, progress.loaded / progress.total);
+        },        (error) => {
+            console.error('Pyramid3 yüklenemedi:', error);
+            addPlaceholderModel(10, 0, -15, 'Pyramid3', 0x00ff00);
+            onModelLoaded();        }
+    );
+
+    // Animasyonlu Walking model - Yeni animasyon sistemi ile
     loadCharacterWithAnimations();
 }
 
@@ -381,6 +467,7 @@ function loadCharacterWithAnimations() {
                 characterAnimations.idle.setLoop(THREE.LoopRepeat);
                 characterAnimations.idle.timeScale = 1.0; // Normal hız
                 characterAnimations.idle.clampWhenFinished = false;
+                characterAnimations.idle.reset();
                 characterAnimations.idle.play(); // Başlangıçta idle çalsın
                 currentAction = characterAnimations.idle;
                 console.log('Idle animasyon başlatıldı');
@@ -395,10 +482,9 @@ function loadCharacterWithAnimations() {
             
             loadedAnimations++;
             checkAnimationLoadComplete();
-        },
-        (progress) => {
+        },        (progress) => {
             console.log('Standing Idle yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(2, (loadedAnimations + progress.loaded / progress.total) / totalAnimations);
+            updateLoadingProgress(4, (loadedAnimations + progress.loaded / progress.total) / totalAnimations);
         },
         (error) => {
             console.error('Standing Idle yüklenemedi:', error);
@@ -416,7 +502,7 @@ function loadCharacterWithAnimations() {
                 console.log('Walk animasyon bulundu:', object.animations[0].name);
                 characterAnimations.walk = characterMixer.clipAction(object.animations[0]);
                 characterAnimations.walk.setLoop(THREE.LoopRepeat);
-                characterAnimations.walk.timeScale = 1.0; // Normal hız - daha yumuşak
+                characterAnimations.walk.timeScale = 0.8; // Biraz daha yavaş yürüme
                 characterAnimations.walk.clampWhenFinished = false;
                 console.log('Walk animasyon hazırlandı');
             } else {
@@ -442,7 +528,7 @@ function loadCharacterWithAnimations() {
 
 function addPlaceholderModel(x, y, z, name, color) {
     let geometry;
-    if (name === 'Pyramid') {
+    if (name.includes('Pyramid')) {
         geometry = new THREE.ConeGeometry(1, 2, 4);
     } else {
         geometry = new THREE.BoxGeometry(1, 2, 1);
@@ -543,18 +629,20 @@ function onMouseClick(event) {
     
     if (intersects.length > 0) {
         let clickedObject = intersects[0].object;
-        
-        while (clickedObject.parent && !models.includes(clickedObject)) {
+          while (clickedObject.parent && !models.includes(clickedObject)) {
             clickedObject = clickedObject.parent;
         }
-          // Piramide tıklanma kontrolü - Mezar bulmacasını aç (gizli oda modunda değilse)
-        if (clickedObject.name === 'Pyramid' || clickedObject.name === 'pyramid') {
+        
+        // Sadece büyük piramit (Pyramid) için gizli mezar bulmacası - diğerleri normal seçim
+        if (clickedObject.name === 'Pyramid') {
             // Gizli oda turu aktifse mezar bulmacasını gösterme
             if (!hiddenChamberTourActive) {
                 showTombPuzzle();
             }
-            return; // Piramide tıklandığında model seçimi yapma
-        }        if (selectedModel) {
+            return; // Büyük piramide tıklandığında model seçimi yapma
+        }
+        
+        if (selectedModel) {
             // Önceki model seçimi kaldırılırken animasyonu sıfırla
             if (selectedModel.name === 'WalkingCharacter') {
                 // Yeni sistemde animasyon otomatik olarak yönetiliyor
@@ -672,10 +760,10 @@ function updateSelectedModel() {
     if (keys.w || keys.s || keys.a || keys.d) {
         moveVector.y = 0;
         moveVector.normalize();
-          // Karakterin hareket yönüne dönmesi
+          // Karakterin hareket yönüne dönmesi - daha yumuşak
         if (moveVector.length() > 0) {
             const targetAngle = Math.atan2(moveVector.x, moveVector.z);
-            // Yumuşak dönüş için lerp kullan
+            // Daha yumuşak dönüş için lerp kullan
             const currentAngle = selectedModel.rotation.y;
             let angleDiff = targetAngle - currentAngle;
             
@@ -683,8 +771,8 @@ function updateSelectedModel() {
             while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
             while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
             
-            // 0.1 interpolasyon faktörü ile yumuşak geçiş
-            selectedModel.rotation.y = currentAngle + angleDiff * 0.15;
+            // Daha yumuşak interpolasyon faktörü
+            selectedModel.rotation.y = currentAngle + angleDiff * 0.08;
         }
         
         // Walking karakteri için özel yavaş hız kullan
@@ -701,8 +789,9 @@ function updateSelectedModel() {
 
 function animate() {
     requestAnimationFrame(animate);
-      // Animasyon mixer'larını güncelle
-    const delta = clock.getDelta();
+    
+    // Animasyon mixer'larını güncelle - delta clamping ile
+    const delta = Math.min(clock.getDelta(), 0.1); // Delta'yı sınırla
     if (characterMixer) {
         characterMixer.update(delta);
     }
@@ -710,21 +799,17 @@ function animate() {
     // Otomatik dönen ışık sistemini güncelle
     updateLightPosition();
     
-    // Deve gezintisi animasyonu
-    if (camelTourActive) {
-        updateCamelTour();
-    }
-    
     // Mezar turu animasyonu
     if (tombTourActive) {
         updateTombTour();
     }
     
-    // Gizli oda için sadece alev animasyonu (otomatik tur kaldırıldı)
+    // Gizli oda için sadece alev animasyonu
     if (hiddenChamberTourActive) {
         animateFlames();
     }
-      controls.update();
+    
+    controls.update();
     updateSelectedModel();
     renderer.render(scene, camera);
 }
@@ -932,7 +1017,7 @@ function showTombPuzzle() {
     // Bulmaca durumunu sıfırla
     resetTombPuzzle();
     
-    console.log('Mezar bulmacası açıldı');
+    console.log('Mezar bulmaca açıldı');
 }
 
 // Mezar bulmacasını kapat
@@ -944,7 +1029,7 @@ function closeTombPuzzle() {
     // Kontrollerini geri etkinleştir
     controls.enabled = true;
     
-    console.log('Mezar bulmacası kapatıldı');
+    console.log('Mezar bulmaca kapatıldı');
 }
 
 // Mezar bulmacasını sıfırla
@@ -1073,6 +1158,52 @@ window.resetTombPuzzle = resetTombPuzzle;
 window.checkTombSequence = checkTombSequence;
 
 // Gizli Oda Turu Fonksiyonları
+
+// Yardımcı fonksiyonlar
+function createStoneTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const context = canvas.getContext('2d');
+    
+    // Taş dokusu oluştur
+    context.fillStyle = '#8B7355';
+    context.fillRect(0, 0, 128, 128);
+    
+    // Rastgele noktalar ekle
+    for (let i = 0; i < 50; i++) {
+        context.fillStyle = `rgb(${120 + Math.random() * 40}, ${100 + Math.random() * 40}, ${60 + Math.random() * 40})`;
+        context.fillRect(Math.random() * 128, Math.random() * 128, 2, 2);
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2, 2);
+    return texture;
+}
+
+function createTextTexture(text, color = '#000000') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const context = canvas.getContext('2d');
+    
+    // Arka plan
+    context.fillStyle = '#F4A460';
+    context.fillRect(0, 0, 128, 128);
+    
+    // Metin
+    context.fillStyle = color;
+    context.font = 'bold 60px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, 64, 64);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+}
+
 function createHiddenChamberScene() {
     // Yeni bir container grup oluştur
     hiddenChamberScene = new THREE.Group();
@@ -1296,7 +1427,7 @@ function createTreasureChests() {
         const goldGeometry = new THREE.SphereGeometry(0.1, 8, 8);
         const goldMaterial = new THREE.MeshPhongMaterial({
             color: 0xFFD700,
-            emissive: 0x222200,
+            emissive: 0xFFD700,
             shininess: 100
         });
         
@@ -1428,30 +1559,32 @@ function createChamberLighting() {
 }
 
 // Basitleştirilmiş animasyon geçiş fonksiyonları
-function transitionToAnimation(targetAction, duration = 0.2) {
-    if (!targetAction) {
-        console.log('Hedef animasyon bulunamadı!');
+function transitionToAnimation(targetAction, duration = 0.3) {
+    if (!targetAction || !characterMixer) {
+        console.log('Hedef animasyon veya mixer bulunamadı!');
         return;
     }
     
     if (targetAction === currentAction) {
         // Aynı animasyon - sadece çalıştığından emin ol
         if (!targetAction.isRunning()) {
+            targetAction.reset();
             targetAction.play();
             console.log('Aynı animasyon yeniden başlatıldı:', targetAction.getClip().name);
         }
         return;
     }
     
-    // Önceki animasyonu durdur
+    // Önceki animasyonu yumuşak bir şekilde durdur
     if (currentAction && currentAction.isRunning()) {
         currentAction.fadeOut(duration);
+        currentAction.crossFadeTo(targetAction, duration, true);
+    } else {
+        // İlk animasyon - direkt başlat
+        targetAction.reset();
+        targetAction.fadeIn(duration);
+        targetAction.play();
     }
-    
-    // Yeni animasyonu başlat
-    targetAction.reset();
-    targetAction.fadeIn(duration);
-    targetAction.play();
     
     currentAction = targetAction;
     console.log('Animasyon geçişi:', targetAction.getClip().name);
@@ -1464,18 +1597,18 @@ function updateCharacterAnimation() {
     
     const currentlyMoving = keys.w || keys.s || keys.a || keys.d;
     
-    // Sadece hareket durumu değişikliklerini kontrol et
+    // Sadece hareket durumu değişikliklerinde animasyon değiştir
     if (currentlyMoving !== wasMoving) {
         if (currentlyMoving) {
             // Harekete başlıyor - walk animasyonuna geç
             if (characterAnimations.walk) {
-                transitionToAnimation(characterAnimations.walk, 0.15);
+                transitionToAnimation(characterAnimations.walk, 0.25);
                 console.log('Walk animasyonuna geçildi');
             }
         } else {
             // Duruyor - idle animasyonuna geç
             if (characterAnimations.idle) {
-                transitionToAnimation(characterAnimations.idle, 0.15);
+                transitionToAnimation(characterAnimations.idle, 0.25);
                 console.log('Idle animasyonuna geçildi');
             }
         }
@@ -1701,7 +1834,7 @@ function onSarcophagusClick() {
             lid.rotation.x = THREE.MathUtils.lerp(
                 openAnimation.startRotation,
                 openAnimation.targetRotation,
-                easeProgress
+                               easeProgress
             );
             
             if (progress < 1) {
@@ -1712,6 +1845,9 @@ function onSarcophagusClick() {
         animateLid();
         
         // Sanduka açıldığında altın parıltı efekti
+
+       
+
         setTimeout(() => {
             addTreasureSparkles();
         }, 1000);
