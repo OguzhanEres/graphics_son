@@ -183,10 +183,21 @@
             cursor: pointer;
             font-size: 12px;
             transition: background 0.3s;
-        }
-
-        .control-btn:hover {
+        }        .control-btn:hover {
             background: #A0522D;
+        }
+        
+        .control-btn {
+            width: 100%;
+            padding: 8px;
+            background: #8B4513;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+            margin-top: 5px;
         }
 
           /* Hiyeroglif Panel Stilleri */
@@ -741,12 +752,48 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="control-group">
+              <div class="control-group">
                 <label>Işık Yoğunluğu:</label>
                 <input type="range" id="lightIntensity" min="0.1" max="3" value="1.5" step="0.1">
                 <input type="number" id="lightIntensityValue" value="1.5" step="0.1">
-            </div>        </div>
+            </div>
+            
+            <h3>🏞️ Terrain Kontrolleri</h3>
+            <div class="control-group">
+                <div class="sun-controls">
+                    <div class="sun-control-row">
+                        <label>X:</label>
+                        <input type="range" id="terrainX" min="-10" max="10" value="0" step="0.5">
+                        <input type="number" id="terrainXValue" value="0" step="0.5">
+                    </div>
+                    <div class="sun-control-row">
+                        <label>Y:</label>
+                        <input type="range" id="terrainY" min="-5" max="5" value="-1" step="0.1">
+                        <input type="number" id="terrainYValue" value="-1" step="0.1">
+                    </div>
+                    <div class="sun-control-row">
+                        <label>Z:</label>
+                        <input type="range" id="terrainZ" min="-10" max="10" value="0" step="0.5">
+                        <input type="number" id="terrainZValue" value="0" step="0.5">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Terrain Boyutu:</label>
+                <input type="range" id="terrainScale" min="0.5" max="5" value="2" step="0.1">
+                <input type="number" id="terrainScaleValue" value="2" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Terrain Döndürme Y:</label>
+                <input type="range" id="terrainRotationY" min="0" max="6.28" value="0" step="0.1">
+                <input type="number" id="terrainRotationYValue" value="0" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <button id="reloadTerrain" class="control-btn" onclick="reloadTerrain()">Terrain'i Yeniden Yükle</button>
+            </div></div>
 
         <!-- Gizli Oda Işık Kontrolleri -->
         <div id="chamberLightControls" class="hidden-chamber-controls">

@@ -6,6 +6,7 @@ import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader.js';
 // Global değişkenler
 let scene, camera, renderer, controls;
 let plane, sun, directionalLight, ambientLight;
+let terrainModel = null; // FBX terrain modeli için
 let selectedModel = null;
 const models = [];
 const raycaster = new THREE.Raycaster();
@@ -221,24 +222,92 @@ function setupLighting() {
 }
 
 function createGround() {
-    // Düzlem oluştur
-    const planeGeometry = new THREE.PlaneGeometry(50, 50);
-    const planeMaterial = new THREE.MeshStandardMaterial({ 
-        color: 	0xcccc99,
+    // FBX modelini terrain olarak yükle
+    const fbxLoader = new FBXLoader();
+    
+    fbxLoader.load(
+        './uploads_files_3835558_untitled.fbx',
+        (object) => {
+            console.log('Terrain FBX modeli yüklendi:', object);
+            
+            // Terrain için uygun boyutlandırma ve pozisyonlama
+            object.scale.set(2, 1, 2); // Terrain'i büyüt
+            object.position.set(0, -1, 0); // Yerden biraz aşağı yerleştir
+            
+            // Tüm mesh'leri traverse et ve terrain özelliklerini ayarla
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.receiveShadow = true;
+                    child.castShadow = false; // Terrain gölge atmaz ama alır
+                    
+                    if (child.material) {
+                        // Terrain materyalini ayarla
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => {
+                                mat.side = THREE.DoubleSide;
+                                mat.roughness = 0.8;
+                                mat.metalness = 0.1;
+                                // Terrain rengi - toprak tonu
+                                if (!mat.map) {
+                                    mat.color.setHex(0x8B7355);
+                                }
+                                if (mat.map) mat.map.flipY = false;
+                            });
+                        } else {
+                            child.material.side = THREE.DoubleSide;
+                            child.material.roughness = 0.8;
+                            child.material.metalness = 0.1;
+                            // Terrain rengi - toprak tonu
+                            if (!child.material.map) {
+                                child.material.color.setHex(0x8B7355);
+                            }
+                            if (child.material.map) child.material.map.flipY = false;
+                        }
+                    }
+                }
+            });
+            
+            object.name = 'TerrainModel';
+            terrainModel = object;
+            scene.add(object);
+            console.log('FBX terrain sahneye eklendi');
+        },
+        (progress) => {
+            console.log('Terrain yükleme:', (progress.loaded / progress.total * 100) + '%');
+        },
+        (error) => {
+            console.error('Terrain FBX yüklenemedi:', error);
+            console.log('Fallback terrain oluşturuluyor...');
+            createFallbackTerrain();
+        }
+    );
+}
+
+function createFallbackTerrain() {
+    // Yedek terrain oluştur (FBX yüklenemezse)
+    const planeGeometry = new THREE.PlaneGeometry(50, 50, 32, 32);
+    
+    // Heightmap ile terrain benzeri yüzey oluştur
+    const vertices = planeGeometry.attributes.position.array;
+    for (let i = 0; i < vertices.length; i += 3) {
+        vertices[i + 2] = Math.random() * 2 - 1; // Z ekseni (yükseklik)
+    }
+    planeGeometry.attributes.position.needsUpdate = true;
+    planeGeometry.computeVertexNormals();
+    
+    const planeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x8B7355,
         roughness: 0.8,
-        metalness: 0.1
+        metalness: 0.1,
+        wireframe: false
     });
+    
     plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotation.x = -Math.PI / 2;
     plane.receiveShadow = true;
+    plane.name = 'FallbackTerrain';
     scene.add(plane);
-    /*
-    // Grid helper
-    const gridHelper = new THREE.GridHelper(50, 50, 0x000000, 0x000000);
-    gridHelper.material.opacity = 0.3;
-    gridHelper.material.transparent = true;
-    scene.add(gridHelper);
-    */
+    console.log('Fallback terrain oluşturuldu');
 }
 
 function loadModels() {
@@ -496,6 +565,7 @@ function setupEventListeners() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
     setupSunControls();
+    setupTerrainControls(); // Terrain kontrolleri ekle
     setupChamberLightControls();
     setupHieroglyphPanels();
     setupTombPuzzle();
@@ -783,7 +853,65 @@ function updateLightPosition() {
     }
 }
 
-// Hiyeroglif panelleri için event listener'ları ayarla
+// Terrain Kontrol Fonksiyonları
+function setupTerrainControls() {
+    const controls = ['terrainX', 'terrainY', 'terrainZ', 'terrainScale', 'terrainRotationY'];
+    
+    controls.forEach(id => {
+        const slider = document.getElementById(id);
+        const valueInput = document.getElementById(id + 'Value');
+        
+        if (slider && valueInput) {
+            slider.addEventListener('input', () => {
+                valueInput.value = slider.value;
+                updateTerrainPosition();
+            });
+            
+            valueInput.addEventListener('input', () => {
+                slider.value = valueInput.value;
+                updateTerrainPosition();
+            });
+        }
+    });
+    
+    console.log('Terrain kontrolleri kuruldu');
+}
+
+function updateTerrainPosition() {
+    if (!terrainModel) return;
+    
+    const x = parseFloat(document.getElementById('terrainX').value);
+    const y = parseFloat(document.getElementById('terrainY').value);
+    const z = parseFloat(document.getElementById('terrainZ').value);
+    const scale = parseFloat(document.getElementById('terrainScale').value);
+    const rotationY = parseFloat(document.getElementById('terrainRotationY').value);
+    
+    terrainModel.position.set(x, y, z);
+    terrainModel.scale.set(scale, scale * 0.5, scale); // Y eksenini biraz daha düz tut
+    terrainModel.rotation.y = rotationY;
+    
+    console.log(`Terrain pozisyonu güncellendi: x=${x}, y=${y}, z=${z}, scale=${scale}, rotY=${rotationY}`);
+}
+
+function reloadTerrain() {
+    if (terrainModel) {
+        scene.remove(terrainModel);
+        terrainModel = null;
+    }
+    
+    // Fallback terrain varsa kaldır
+    if (plane) {
+        scene.remove(plane);
+        plane = null;
+    }
+    
+    console.log('Terrain yeniden yükleniyor...');
+    createGround();
+}
+
+// Global fonksiyonları window objesine ekle
+window.reloadTerrain = reloadTerrain;
+
 function setupHieroglyphPanels() {
     const panels = document.querySelectorAll('.hieroglyph-panel');
     panels.forEach(panel => {
