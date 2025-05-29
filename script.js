@@ -12,18 +12,23 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const keys = { w: false, a: false, s: false, d: false };
 const moveSpeed = 0.15; // Diğer modeller için
-const walkingCharacterSpeed = 0.05; // Walking karakteri için yavaş hız
+const walkingCharacterSpeed = 0.05; // Walking karakteri için minimum hız
 let loadedModels = 0;
-const totalModels = 4; // 4 model olacak (deve dahil)
+const totalModels = 3; // 3 model olacak (WalkingModel kaldırıldı)
 
 // Animasyon için yeni değişkenler
 let mixer; // Hurricane_Kick için animasyon mixer'ı
 let walkAction; // Hurricane_Kick yürüme animasyonu
 let idleAction; // Durma animasyonu (varsa)
 
-// Walking.fbx için animasyon değişkenleri
-let walkingMixer; // Walking.fbx için animasyon mixer'ı
-let walkingAction; // Walking.fbx yürüme animasyonu
+// Basitleştirilmiş animasyon sistemi değişkenleri
+let characterAnimations = {
+    idle: null,        // Standing Idle.fbx
+    walk: null         // Female Walk.fbx
+};
+let characterMixer = null;
+let currentAction = null;
+let wasMoving = false;
 
 const clock = new THREE.Clock(); // Zaman takibi için
 
@@ -329,15 +334,24 @@ function loadModels() {
             console.error('Pyramid yüklenemedi:', error);
             addPlaceholderModel(4, 0, 0, 'Pyramid', 0x00ff00);
             onModelLoaded();
-        }
-    );
-      // Animasyonlu Walking model
+        }    );      // Animasyonlu Walking model - Yeni animasyon sistemi ile
+    loadCharacterWithAnimations();
+}
+
+    // Basitleştirilmiş animasyon sistemi ile karakter yükleme
+function loadCharacterWithAnimations() {
+    const fbxLoader = new FBXLoader();
+    let loadedAnimations = 0;
+    const totalAnimations = 2; // Sadece idle ve walk
+    let characterModel = null;
+    
+    // Önce base model olarak Standing Idle'ı yükle
     fbxLoader.load(
-        './Hurricane_Kick.fbx',
+        './Standing Idle.fbx',
         (object) => {
-            console.log('Walking model yüklendi:', object);
+            console.log('Standing Idle yüklendi:', object);
             object.position.set(0, 0, -4);
-            object.scale.set(0.05, 0.05, 0.05); // Boyutu ayarlayın
+            object.scale.set(0.01, 0.01, 0.01);
             
             // Gölgeleri etkinleştir
             object.traverse((child) => {
@@ -358,103 +372,72 @@ function loadModels() {
                     }
                 }
             });
-            
-            // Animasyonları kontrol et
+              // AnimationMixer oluştur
+            characterMixer = new THREE.AnimationMixer(object);
+              // Idle animasyonunu ayarla
             if (object.animations && object.animations.length > 0) {
-                console.log('Animasyonlar bulundu:', object.animations.length);
-                
-                // AnimationMixer oluştur
-                mixer = new THREE.AnimationMixer(object);
-                
-                // Yürüme animasyonunu hazırla ama başlatma
-                walkAction = mixer.clipAction(object.animations[0]);
-                walkAction.setLoop(THREE.LoopRepeat);
-                
-                // Animasyonu durdur
-                walkAction.stop();
-                
-                console.log('Animasyon hazırlandı:', object.animations[0].name);
+                console.log('Idle animasyon bulundu:', object.animations[0].name);
+                characterAnimations.idle = characterMixer.clipAction(object.animations[0]);
+                characterAnimations.idle.setLoop(THREE.LoopRepeat);
+                characterAnimations.idle.timeScale = 1.0; // Normal hız
+                characterAnimations.idle.clampWhenFinished = false;
+                characterAnimations.idle.play(); // Başlangıçta idle çalsın
+                currentAction = characterAnimations.idle;
+                console.log('Idle animasyon başlatıldı');
             } else {
-                console.log('Bu modelde animasyon bulunamadı');
+                console.log('Idle animasyon bulunamadı!');
             }
             
             object.name = 'WalkingCharacter';
+            characterModel = object;
             scene.add(object);
             models.push(object);
-            onModelLoaded();
+            
+            loadedAnimations++;
+            checkAnimationLoadComplete();
         },
         (progress) => {
-            console.log('Walking model yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(2, progress.loaded / progress.total);
+            console.log('Standing Idle yükleme:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(2, (loadedAnimations + progress.loaded / progress.total) / totalAnimations);
         },
         (error) => {
-            console.error('Walking model yüklenemedi:', error);
+            console.error('Standing Idle yüklenemedi:', error);
             addPlaceholderModel(0, 0, -4, 'WalkingCharacter', 0x0000ff);
-            onModelLoaded();
-        }
-    );      // Walking model 2
-    fbxLoader.load(
-        './Walking.fbx',
-        (object) => {
-            console.log('Walking model 2 yüklendi:', object);
-            object.position.set(-8, 0, 8);
-            object.scale.set(0.03, 0.03, 0.03);
-            object.rotation.y = Math.PI / 4; // 45 derece döndür
-            
-            // Gölgeleri etkinleştir
-            object.traverse((child) => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                    
-                    if (child.material) {
-                        if (Array.isArray(child.material)) {
-                            child.material.forEach(mat => {
-                                mat.side = THREE.FrontSide;
-                                if (mat.map) mat.map.flipY = false;
-                            });
-                        } else {
-                            child.material.side = THREE.FrontSide;
-                            if (child.material.map) child.material.map.flipY = false;
-                        }
-                    }
-                }
-            });
-            
-            // Animasyonları kontrol et
-            if (object.animations && object.animations.length > 0) {
-                console.log('Walking model 2 animasyonları bulundu:', object.animations.length);
-                
-                // AnimationMixer oluştur
-                walkingMixer = new THREE.AnimationMixer(object);
-                
-                // Yürüme animasyonunu hazırla ama başlatma
-                walkingAction = walkingMixer.clipAction(object.animations[0]);
-                walkingAction.setLoop(THREE.LoopRepeat);
-                
-                // Animasyonu durdur
-                walkingAction.stop();
-                
-                console.log('Walking model 2 animasyon hazırlandı:', object.animations[0].name);
-            } else {
-                console.log('Walking model 2 animasyon bulunamadı');
-            }
-            
-            object.name = 'WalkingModel';
-            scene.add(object);
-            models.push(object);
-            onModelLoaded();
-        },
-        (progress) => {
-            console.log('Walking model 2 yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(3, progress.loaded / progress.total);
-        },
-        (error) => {
-            console.error('Walking model 2 yüklenemedi:', error);
-            addPlaceholderModel(-8, 0, 8, 'WalkingModel', 0xFFAA00);
-            onModelLoaded();
+            loadedAnimations++;
+            checkAnimationLoadComplete();
         }
     );
+    
+    // Walk animasyonunu yükle
+    fbxLoader.load(
+        './Female Walk.fbx',
+        (object) => {
+            console.log('Walk animasyon yüklendi');            if (characterMixer && object.animations && object.animations.length > 0) {
+                console.log('Walk animasyon bulundu:', object.animations[0].name);
+                characterAnimations.walk = characterMixer.clipAction(object.animations[0]);
+                characterAnimations.walk.setLoop(THREE.LoopRepeat);
+                characterAnimations.walk.timeScale = 1.0; // Normal hız - daha yumuşak
+                characterAnimations.walk.clampWhenFinished = false;
+                console.log('Walk animasyon hazırlandı');
+            } else {
+                console.log('Walk animasyon bulunamadı!');
+            }
+            loadedAnimations++;
+            checkAnimationLoadComplete();
+        },
+        undefined,
+        (error) => {
+            console.error('Walk animasyon yüklenemedi:', error);
+            loadedAnimations++;
+            checkAnimationLoadComplete();
+        }
+    );
+      function checkAnimationLoadComplete() {
+        if (loadedAnimations >= totalAnimations) {
+            onModelLoaded();
+            console.log('Karakter animasyon sistemi hazır!');
+        }
+    }
 }
 
 function addPlaceholderModel(x, y, z, name, color) {
@@ -571,15 +554,11 @@ function onMouseClick(event) {
                 showTombPuzzle();
             }
             return; // Piramide tıklandığında model seçimi yapma
-        }
-          if (selectedModel) {
-            // Önceki model seçimi kaldırılırken animasyonu durdur
-            if (selectedModel.name === 'WalkingCharacter' && walkAction) {
-                walkAction.stop();
-            }
-            if (selectedModel.name === 'WalkingModel' && walkingAction) {
-                walkingAction.stop();
-            }
+        }        if (selectedModel) {
+            // Önceki model seçimi kaldırılırken animasyonu sıfırla
+            if (selectedModel.name === 'WalkingCharacter') {
+                // Yeni sistemde animasyon otomatik olarak yönetiliyor
+                wasMoving = false;            }
             deselectModel(selectedModel);
         }
         
@@ -588,12 +567,12 @@ function onMouseClick(event) {
             selectModel(selectedModel);
             document.getElementById('selectedModel').textContent = `Seçili Model: ${selectedModel.name}`;
             updateCharacterStatus();
-        }
-    } else {
+        }    } else {
         if (selectedModel) {
-            // Model seçimi kaldırılırken animasyonu durdur
-            if (selectedModel.name === 'WalkingCharacter' && walkAction) {
-                walkAction.stop();
+            // Model seçimi kaldırılırken animasyonu sıfırla
+            if (selectedModel.name === 'WalkingCharacter') {
+                // Yeni sistemde animasyon otomatik olarak yönetiliyor
+                wasMoving = false;
             }
             deselectModel(selectedModel);
             selectedModel = null;
@@ -680,48 +659,33 @@ function updateSelectedModel() {
     const cameraRight = new THREE.Vector3();
     cameraRight.crossVectors(camera.up, cameraDirection).normalize();
     
-    const moveVector = new THREE.Vector3();
-    
-    if (keys.w) moveVector.add(cameraDirection.clone().multiplyScalar(-1));
-    if (keys.s) moveVector.add(cameraDirection);
-    if (keys.a) moveVector.add(cameraRight.clone().multiplyScalar(-1));
-    if (keys.d) moveVector.add(cameraRight);
-      // Seçili model WalkingCharacter ise animasyon kontrolü yap
-    if (selectedModel.name === 'WalkingCharacter' && walkAction) {
-        const isMoving = keys.w || keys.s || keys.a || keys.d;
-        
-        if (isMoving && !walkAction.isRunning()) {
-            // Hareket başladığında animasyonu oynat
-            walkAction.reset();
-            walkAction.play();
-            console.log('Yürüme animasyonu başlatıldı');
-        } else if (!isMoving && walkAction.isRunning()) {
-            // Hareket durduğunda animasyonu durdur
-            walkAction.stop();
-            console.log('Yürüme animasyonu durduruldu');
-        }
+    const moveVector = new THREE.Vector3();    if (keys.w) moveVector.add(cameraDirection);
+    if (keys.s) moveVector.add(cameraDirection.clone().multiplyScalar(-1));
+    if (keys.a) moveVector.add(cameraRight);
+    if (keys.d) moveVector.add(cameraRight.clone().multiplyScalar(-1));
+      // Yeni animasyon sistemi - WalkingCharacter için
+    if (selectedModel.name === 'WalkingCharacter') {
+        updateCharacterAnimation();
     }
     
-    // Seçili model WalkingModel ise animasyon kontrolü yap
-    if (selectedModel.name === 'WalkingModel' && walkingAction) {
-        const isMoving = keys.w || keys.s || keys.a || keys.d;
-        
-        if (isMoving && !walkingAction.isRunning()) {
-            // Hareket başladığında animasyonu oynat
-            walkingAction.reset();
-            walkingAction.play();
-            console.log('Walking model 2 animasyonu başlatıldı');
-        } else if (!isMoving && walkingAction.isRunning()) {
-            // Hareket durduğunda animasyonu durdur
-            walkingAction.stop();
-            console.log('Walking model 2 animasyonu durduruldu');
-        }
-    }
-    
-    // Sadece hareket tuşları basılıysa modeli hareket ettir
+      // Sadece hareket tuşları basılıysa modeli hareket ettir
     if (keys.w || keys.s || keys.a || keys.d) {
         moveVector.y = 0;
         moveVector.normalize();
+          // Karakterin hareket yönüne dönmesi
+        if (moveVector.length() > 0) {
+            const targetAngle = Math.atan2(moveVector.x, moveVector.z);
+            // Yumuşak dönüş için lerp kullan
+            const currentAngle = selectedModel.rotation.y;
+            let angleDiff = targetAngle - currentAngle;
+            
+            // Açı farkını -π ile π arasında tut
+            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+            
+            // 0.1 interpolasyon faktörü ile yumuşak geçiş
+            selectedModel.rotation.y = currentAngle + angleDiff * 0.15;
+        }
         
         // Walking karakteri için özel yavaş hız kullan
         const currentSpeed = selectedModel.name === 'WalkingCharacter' ? walkingCharacterSpeed : moveSpeed;
@@ -737,14 +701,10 @@ function updateSelectedModel() {
 
 function animate() {
     requestAnimationFrame(animate);
-    
-    // Animasyon mixer'larını güncelle
+      // Animasyon mixer'larını güncelle
     const delta = clock.getDelta();
-    if (mixer) {
-        mixer.update(delta);
-    }
-    if (walkingMixer) {
-        walkingMixer.update(delta);
+    if (characterMixer) {
+        characterMixer.update(delta);
     }
     
     // Otomatik dönen ışık sistemini güncelle
@@ -1467,77 +1427,61 @@ function createChamberLighting() {
     chamberLights.push(chamberSarcophagusLight);
 }
 
-// Yardımcı fonksiyonlar - tekstür oluşturma
-function createStoneTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const context = canvas.getContext('2d');
-    
-    // Taş dokusu oluştur
-    context.fillStyle = '#8B7355';
-    context.fillRect(0, 0, 256, 256);
-    
-    // Rastgele taş detayları
-    for (let i = 0; i < 50; i++) {
-        context.fillStyle = `rgb(${120 + Math.random() * 40}, ${100 + Math.random() * 40}, ${70 + Math.random() * 30})`;
-        context.fillRect(Math.random() * 256, Math.random() * 256, Math.random() * 20 + 5, Math.random() * 20 + 5);
+// Basitleştirilmiş animasyon geçiş fonksiyonları
+function transitionToAnimation(targetAction, duration = 0.2) {
+    if (!targetAction) {
+        console.log('Hedef animasyon bulunamadı!');
+        return;
     }
     
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(2, 2);
-    
-    return texture;
-}
-
-function createWoodTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const context = canvas.getContext('2d');
-    
-    // Ahşap dokusu oluştur
-    const gradient = context.createLinearGradient(0, 0, 256, 0);
-    gradient.addColorStop(0, '#8B4513');
-    gradient.addColorStop(0.5, '#A0522D');
-    gradient.addColorStop(1, '#8B4513');
-    
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, 256, 256);
-    
-    // Ahşap damarları
-    for (let i = 0; i < 20; i++) {
-        context.strokeStyle = '#654321';
-        context.lineWidth = Math.random() * 3 + 1;
-        context.beginPath();
-        context.moveTo(0, Math.random() * 256);
-        context.lineTo(256, Math.random() * 256);
-        context.stroke();
+    if (targetAction === currentAction) {
+        // Aynı animasyon - sadece çalıştığından emin ol
+        if (!targetAction.isRunning()) {
+            targetAction.play();
+            console.log('Aynı animasyon yeniden başlatıldı:', targetAction.getClip().name);
+        }
+        return;
     }
     
-    return new THREE.CanvasTexture(canvas);
+    // Önceki animasyonu durdur
+    if (currentAction && currentAction.isRunning()) {
+        currentAction.fadeOut(duration);
+    }
+    
+    // Yeni animasyonu başlat
+    targetAction.reset();
+    targetAction.fadeIn(duration);
+    targetAction.play();
+    
+    currentAction = targetAction;
+    console.log('Animasyon geçişi:', targetAction.getClip().name);
 }
 
-function createTextTexture(text, color = '#FFD700') {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const context = canvas.getContext('2d');
+function updateCharacterAnimation() {
+    if (!characterMixer || !selectedModel || selectedModel.name !== 'WalkingCharacter') {
+        return;
+    }
     
-    // Arka plan
-    context.fillStyle = 'rgba(0, 0, 0, 0)';
-    context.fillRect(0, 0, 128, 128);
+    const currentlyMoving = keys.w || keys.s || keys.a || keys.d;
     
-    // Metin
-    context.fillStyle = color;
-    context.font = 'bold 60px Arial';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText(text, 64, 64);
-    
-    return new THREE.CanvasTexture(canvas);
+    // Sadece hareket durumu değişikliklerini kontrol et
+    if (currentlyMoving !== wasMoving) {
+        if (currentlyMoving) {
+            // Harekete başlıyor - walk animasyonuna geç
+            if (characterAnimations.walk) {
+                transitionToAnimation(characterAnimations.walk, 0.15);
+                console.log('Walk animasyonuna geçildi');
+            }
+        } else {
+            // Duruyor - idle animasyonuna geç
+            if (characterAnimations.idle) {
+                transitionToAnimation(characterAnimations.idle, 0.15);
+                console.log('Idle animasyonuna geçildi');
+            }
+        }
+        
+        wasMoving = currentlyMoving;
+    }
 }
 
 function startHiddenChamberTour() {

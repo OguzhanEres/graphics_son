@@ -292,62 +292,8 @@
             cursor: pointer;
             padding: 0;
             width: 25px;
-            height: 25px;
-        }
-        
-        /* Deve Gezintisi Kontrolleri */        .camel-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            z-index: 110;
-            backdrop-filter: blur(5px);
-        }
-        
-        .camel-btn {
-            background: linear-gradient(45deg, #8B4513, #CD853F);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 5px;
-            transition: all 0.3s ease;
-        }
-        
-        .camel-btn:hover {
-            background: linear-gradient(45deg, #CD853F, #8B4513);
-            transform: translateY(-2px);
-        }
-        
-        .camel-btn:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        /* Kum Fırtınası Efekti */
-        .sandstorm-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, transparent 20%, rgba(194, 154, 108, 0.3) 80%);
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 2s ease;
-        }
-          .sandstorm-active {
-            opacity: 1;
-        }
-        
-        /* Gizli Mezar Bulmacası */
+            height: 25px;        }
+          /* Gizli Mezar Bulmacası */
         .tomb-puzzle {
             position: absolute;
             top: 50%;
@@ -844,13 +790,7 @@
                 <p id="puzzleResult" style="margin-top: 10px; font-weight: bold;"></p>
             </div>
         </div>
-        
-        <!-- Deve Gezintisi Kontrolleri -->        <div class="camel-controls">
-            <h4 style="margin: 0 0 10px 0; color: #FFD700;">🐪 Deve Gezintisi</h4>
-            <button class="camel-btn" id="startCamelTour" onclick="startCamelTour()">Deve Turunu Başlat</button>
-            <button class="camel-btn" id="stopCamelTour" onclick="stopCamelTour()" disabled>Turu Durdur</button>
-            <p style="margin: 5px 0 0 0; font-size: 12px;">Kervan boyunca otomatik kamera hareketi</p>
-        </div>
+  
 
         <!-- Vaha Keşfi (Oasis Discovery) Kontrolleri -->
         <button class="oasis-info-toggle" onclick="toggleOasisMode()">🌴 Vaha Keşfi</button>
@@ -879,12 +819,8 @@
             <h3 id="oasisTitle">🌴 Keşif Bilgisi</h3>
             <div id="oasisContent">
                 <p>Çölün ortasında bulduğunuz bu vaha, binlerce yıldır yolcuları ağırlamış.</p>
-            </div>
-        </div>
+            </div>        </div>
 
-          <!-- Kum Fırtınası Overlay -->
-        <div id="sandstormOverlay" class="sandstorm-overlay"></div>
-        
         <!-- Gizli Mezar Bulmacası -->
         <div id="tombPuzzle" class="tomb-puzzle">
             <h2>🏺 Gizli Mezar Girişi</h2>
