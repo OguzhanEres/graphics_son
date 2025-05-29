@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js FBX Viewer - Interactive 3D Scene</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+          #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 150;
+            min-width: 250px;
+            max-height: 90vh;
+            overflow-y: auto;
+            backdrop-filter: blur(5px);
+        }
+        
+        #controls h3 {
+            margin: 0 0 10px 0;
+            color: #ffaa00;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        .control-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .control-group input[type="number"] {
+            width: 60px;
+            padding: 2px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+        }
+          #info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 140;
+            max-width: 300px;
+            max-height: 90vh;
+            overflow-y: auto;
+            backdrop-filter: blur(5px);
+        }
+        
+        #info h3 {
+            margin: 0 0 10px 0;
+            color: #00aaff;
+        }
+        
+        #info p {
+            margin: 5px 0;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+          #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            z-index: 300;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .sun-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .sun-control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+<<<<<<< HEAD
+        }        .sun-control-row label {
+=======
+        }
+          .sun-control-row label {
+>>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
+            width: 20px;
+            margin: 0;
+        }        /* Gizli Oda Işık Kontrolleri */
+        #chamberLightControls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 140;
+            min-width: 280px;
+            max-height: 90vh;
+            overflow-y: auto;
+            backdrop-filter: blur(5px);
+            display: none; /* Başlangıçta gizli */
+            border: 2px solid #8B4513;
+        }
+
+        #chamberLightControls.active {
+            display: block;
+        }
+
+        #chamberLightControls h3 {
+            margin: 0 0 15px 0;
+            color: #FF6600;
+            text-align: center;
+        }
+
+        .light-position-controls {
+            background: rgba(139, 69, 19, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .position-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .position-row label {
+            width: 15px;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .position-row input[type="range"] {
+            flex: 1;
+        }
+
+        .position-row span {
+            width: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #FFD700;
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 8px;
+            background: #8B4513;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .control-btn:hover {
+            background: #A0522D;
+        }
+
+          /* Hiyeroglif Panel Stilleri */
+        .hieroglyph-panels-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 70;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .hieroglyph-panel {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            background: rgba(139, 69, 19, 0.9);
+            border: 3px solid #8B4513;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #FFD700;
+            transition: all 0.3s ease;
+        }
+        
+        .hieroglyph-panel:hover {
+            background: rgba(139, 69, 19, 1);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+          .hieroglyph-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.98);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            z-index: 260;
+            display: none;
+            border: 2px solid #FFD700;
+            backdrop-filter: blur(10px);
+        }
+        
+        .hieroglyph-info h3 {
+            color: #FFD700;
+            margin-top: 0;
+        }
+        
+        .hieroglyph-puzzle {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 5px;
+        }
+          .puzzle-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+          .puzzle-option {
+            padding: 10px 15px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+            min-width: 120px;
+            flex: 0 0 auto;
+        }
+        
+        .puzzle-option:hover {
+            background: rgba(255, 215, 0, 0.4);
+        }
+        
+        .puzzle-option.correct {
+            background: rgba(0, 255, 0, 0.3);
+        }
+        
+        .puzzle-option.wrong {
+            background: rgba(255, 0, 0, 0.3);
+        }
+        
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: #FFD700;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 25px;
+            height: 25px;
+        }
+        
+        /* Deve Gezintisi Kontrolleri */        .camel-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 110;
+            backdrop-filter: blur(5px);
+        }
+        
+        .camel-btn {
+            background: linear-gradient(45deg, #8B4513, #CD853F);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .camel-btn:hover {
+            background: linear-gradient(45deg, #CD853F, #8B4513);
+            transform: translateY(-2px);
+        }
+        
+        .camel-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Kum Fırtınası Efekti */
+        .sandstorm-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 20%, rgba(194, 154, 108, 0.3) 80%);
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+          .sandstorm-active {
+            opacity: 1;
+        }
+        
+        /* Gizli Mezar Bulmacası */
+        .tomb-puzzle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            z-index: 300;
+            display: none;
+            border: 3px solid #FFD700;
+            text-align: center;
+        }
+        
+        .tomb-puzzle h2 {
+            color: #FFD700;
+            margin-top: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .hieroglyph-sequence {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .sequence-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(139, 69, 19, 0.5);
+            border: 2px dashed #FFD700;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #FFD700;
+            position: relative;
+        }
+        
+        .sequence-slot.filled {
+            background: rgba(139, 69, 19, 0.9);
+            border: 2px solid #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        
+        .sequence-number {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FFD700;
+            color: black;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+          .available-hieroglyphs {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: rgba(139, 69, 19, 0.2);
+            border-radius: 8px;
+        }
+        
+        .selectable-hieroglyph {
+            width: 50px;
+            height: 50px;
+            background: rgba(139, 69, 19, 0.8);
+            border: 2px solid #8B4513;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #FFD700;
+            transition: all 0.3s ease;
+        }
+        
+        .selectable-hieroglyph:hover {
+            background: rgba(139, 69, 19, 1);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .selectable-hieroglyph.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .puzzle-controls {
+            margin-top: 20px;
+        }
+        
+        .puzzle-btn {
+            background: linear-gradient(45deg, #8B4513, #CD853F);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .puzzle-btn:hover {
+            background: linear-gradient(45deg, #CD853F, #8B4513);
+            transform: translateY(-2px);
+        }
+        
+        .puzzle-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .puzzle-status {
+            margin: 15px 0;
+            font-weight: bold;
+            min-height: 24px;
+        }
+        
+        .puzzle-status.success {
+            color: #00ff00;
+        }
+        
+        .puzzle-status.error {
+            color: #ff6666;
+        }
+        
+        /* Mezar Turu Animasyonu */
+        .tomb-tour-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            z-index: 250;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .tomb-tour-active {
+            opacity: 1;
+        }
+        
+        .tomb-tour-text {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 18px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        /* Vaha Keşfi (Oasis Discovery) Stilleri */        .oasis-panel {
+            position: absolute;
+            background: rgba(0, 139, 139, 0.98);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid #40E0D0;
+            max-width: 350px;
+            z-index: 250;
+            display: none;
+            box-shadow: 0 0 30px rgba(64, 224, 208, 0.4);
+            backdrop-filter: blur(10px);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .oasis-panel h3 {
+            color: #40E0D0;
+            margin-top: 0;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .oasis-panel p {
+            margin: 8px 0;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .water-ripple {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(64, 224, 208, 0.8);
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        @keyframes ripple-animation {
+            0% {
+                width: 10px;
+                height: 10px;
+                opacity: 1;
+            }
+            100% {
+                width: 100px;
+                height: 100px;
+                opacity: 0;
+            }
+        }
+        
+        .ripple-animate {
+            animation: ripple-animation 1.5s ease-out;
+        }
+          .plant-indicator {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(34, 139, 34, 0.8);
+            border: 2px solid #228B22;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 80;
+            transition: all 0.3s ease;
+        }
+        
+        .plant-indicator:hover {
+            background: rgba(34, 139, 34, 1);
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(34, 139, 34, 0.6);
+        }
+          .water-indicator {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 139, 139, 0.6);
+            border: 2px solid #40E0D0;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 90;
+            transition: all 0.3s ease;
+        }
+        
+        .water-indicator:hover {
+            background: rgba(0, 139, 139, 0.9);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(64, 224, 208, 0.7);
+        }
+          .oasis-info-toggle {
+            position: absolute;
+            top: 120px;
+            left: 10px;
+            background: linear-gradient(45deg, #008B8B, #40E0D0);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 130;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(64, 224, 208, 0.3);
+        }
+        
+        .oasis-info-toggle:hover {
+            background: linear-gradient(45deg, #40E0D0, #008B8B);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(64, 224, 208, 0.5);
+        }
+        
+        .environmental-stat {
+            background: rgba(0, 139, 139, 0.2);
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #40E0D0;
+        }
+        
+        .stat-label {
+            font-weight: bold;
+            color: #40E0D0;
+        }
+          .discovery-counter {
+            position: absolute;
+            top: 170px;
+            left: 10px;
+            background: rgba(0, 139, 139, 0.95);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid #40E0D0;
+            z-index: 120;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .discovery-counter h4 {
+            margin: 0 0 5px 0;
+            color: #40E0D0;
+        }
+        
+        .plant-indicator.discovered {
+            background: rgba(34, 139, 34, 1) !important;
+            box-shadow: 0 0 20px rgba(34, 139, 34, 0.8);
+            animation: pulse 2s infinite;
+        }
+        
+        .water-indicator.discovered {
+            background: rgba(0, 139, 139, 1) !important;
+            box-shadow: 0 0 25px rgba(64, 224, 208, 0.9);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+            50% { 
+                transform: scale(1.1); 
+                opacity: 0.8; 
+            }
+        }
+        
+        .oasis-panel .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #40E0D0;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .oasis-panel .close-btn:hover {
+            color: #fff;
+            text-shadow: 0 0 10px #40E0D0;
+        }
+        
+        /* Başlangıçta gizle */
+        .plant-indicator,
+        .water-indicator,
+        .discovery-counter {
+            display: none;
+        }
+        
+        /* Hiyeroglif Panel Stilleri */
+        .hieroglyph-panel {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(139, 69, 19, 0.9);
+            border: 3px solid #8B4513;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #FFD700;
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+        
+        .hieroglyph-panel:hover {
+            background: rgba(139, 69, 19, 1);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        
+        .hieroglyph-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            z-index: 200;
+            display: none;
+            border: 2px solid #FFD700;
+        }
+        
+        .hieroglyph-info h3 {
+            color: #FFD700;
+            margin-top: 0;
+        }
+        
+        .hieroglyph-puzzle {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 5px;
+        }
+        
+        .puzzle-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .puzzle-option {
+            padding: 8px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        
+        .puzzle-option:hover {
+            background: rgba(255, 215, 0, 0.4);
+        }
+        
+        .puzzle-option.correct {
+            background: rgba(0, 255, 0, 0.3);
+        }
+        
+        .puzzle-option.wrong {
+            background: rgba(255, 0, 0, 0.3);
+        }
+        
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: #FFD700;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 25px;
+            height: 25px;
+        }
+        
+        /* Deve Gezintisi Kontrolleri */
+        .camel-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+        }
+        
+        .camel-btn {
+            background: linear-gradient(45deg, #8B4513, #CD853F);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .camel-btn:hover {
+            background: linear-gradient(45deg, #CD853F, #8B4513);
+            transform: translateY(-2px);
+        }
+        
+        .camel-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Kum Fırtınası Efekti */
+        .sandstorm-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 20%, rgba(194, 154, 108, 0.3) 80%);
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+          .sandstorm-active {
+            opacity: 1;
+        }
+        
+        /* Gizli Mezar Bulmacası */
+        .tomb-puzzle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            z-index: 300;
+            display: none;
+            border: 3px solid #FFD700;
+            text-align: center;
+        }
+        
+        .tomb-puzzle h2 {
+            color: #FFD700;
+            margin-top: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .hieroglyph-sequence {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .sequence-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(139, 69, 19, 0.5);
+            border: 2px dashed #FFD700;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #FFD700;
+            position: relative;
+        }
+        
+        .sequence-slot.filled {
+            background: rgba(139, 69, 19, 0.9);
+            border: 2px solid #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        
+        .sequence-number {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FFD700;
+            color: black;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .available-hieroglyphs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .selectable-hieroglyph {
+            width: 50px;
+            height: 50px;
+            background: rgba(139, 69, 19, 0.8);
+            border: 2px solid #8B4513;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #FFD700;
+            transition: all 0.3s ease;
+        }
+        
+        .selectable-hieroglyph:hover {
+            background: rgba(139, 69, 19, 1);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .selectable-hieroglyph.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .puzzle-controls {
+            margin-top: 20px;
+        }
+        
+        .puzzle-btn {
+            background: linear-gradient(45deg, #8B4513, #CD853F);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .puzzle-btn:hover {
+            background: linear-gradient(45deg, #CD853F, #8B4513);
+            transform: translateY(-2px);
+        }
+        
+        .puzzle-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .puzzle-status {
+            margin: 15px 0;
+            font-weight: bold;
+            min-height: 24px;
+        }
+        
+        .puzzle-status.success {
+            color: #00ff00;
+        }
+        
+        .puzzle-status.error {
+            color: #ff6666;
+        }
+        
+        /* Mezar Turu Animasyonu */
+        .tomb-tour-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            z-index: 250;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .tomb-tour-active {
+            opacity: 1;
+        }
+        
+        .tomb-tour-text {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 18px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="loading">
+            <div>FBX Modeller Yükleniyor...</div>
+            <div style="font-size: 14px; margin-top: 10px;">Lütfen bekleyin...</div>
+            <div id="loadingProgress" style="font-size: 12px; margin-top: 5px;">0%</div>
+        </div>
+        
+        <div id="controls">
+            <h3>🌞 Güneş Kontrolleri</h3>
+            <div class="control-group">
+                <div class="sun-controls">
+                    <div class="sun-control-row">
+                        <label>X:</label>
+                        <input type="range" id="sunX" min="-30" max="30" value="10" step="0.5">
+                        <input type="number" id="sunXValue" value="10" step="0.5">
+                    </div>
+                    <div class="sun-control-row">
+                        <label>Y:</label>
+                        <input type="range" id="sunY" min="5" max="50" value="25" step="0.5">
+                        <input type="number" id="sunYValue" value="25" step="0.5">
+                    </div>
+                    <div class="sun-control-row">
+                        <label>Z:</label>
+                        <input type="range" id="sunZ" min="-30" max="30" value="10" step="0.5">
+                        <input type="number" id="sunZValue" value="10" step="0.5">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Işık Yoğunluğu:</label>
+                <input type="range" id="lightIntensity" min="0.1" max="3" value="1.5" step="0.1">
+                <input type="number" id="lightIntensityValue" value="1.5" step="0.1">
+            </div>        </div>
+
+        <!-- Gizli Oda Işık Kontrolleri -->
+        <div id="chamberLightControls" class="hidden-chamber-controls">
+            <h3>🔥 Gizli Oda Işıkları</h3>
+              <div class="control-group">
+                <label>Ana Işık Yoğunluğu:</label>
+                <input type="range" id="chamberMainIntensity" min="0.1" max="5" value="4.0" step="0.1">
+                <input type="number" id="chamberMainIntensityValue" value="4.0" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Ortam Işığı:</label>
+                <input type="range" id="chamberAmbientIntensity" min="0.1" max="2" value="1.5" step="0.1">
+                <input type="number" id="chamberAmbientIntensityValue" value="1.5" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Meşale Işıkları:</label>
+                <input type="range" id="chamberTorchIntensity" min="0.1" max="2" value="1.5" step="0.1">
+                <input type="number" id="chamberTorchIntensityValue" value="1.5" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Sanduka Spot Işığı:</label>
+                <input type="range" id="chamberSarcophagusIntensity" min="0.1" max="3" value="2.0" step="0.1">
+                <input type="number" id="chamberSarcophagusIntensityValue" value="2.0" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Ana Işık Pozisyonu</label>
+                <div class="light-position-controls">
+                    <div class="position-row">
+                        <label>X:</label>
+                        <input type="range" id="chamberMainX" min="-10" max="10" value="0" step="0.5">
+                        <span id="chamberMainXValue">0</span>
+                    </div>
+                    <div class="position-row">
+                        <label>Y:</label>
+                        <input type="range" id="chamberMainY" min="2" max="15" value="8" step="0.5">
+                        <span id="chamberMainYValue">8</span>
+                    </div>
+                    <div class="position-row">
+                        <label>Z:</label>
+                        <input type="range" id="chamberMainZ" min="-10" max="10" value="2" step="0.5">
+                        <span id="chamberMainZValue">2</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Işık Rengi:</label>
+                <input type="color" id="chamberLightColor" value="#ffffaa">
+            </div>
+            
+            <div class="control-group">
+                <button id="resetChamberLights" class="control-btn">Varsayılana Sıfırla</button>
+            </div>
+        </div>
+<<<<<<< HEAD
+
+=======
+>>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
+          <!-- Info panelini güncelle -->
+        <div id="info">
+            <h3>📋 Kontroller</h3>
+            <p><strong>Mouse:</strong> Sahneyi döndür/yakınlaştır</p>
+            <p><strong>WASD:</strong> Karakteri hareket ettir</p>
+            <p><strong>Sol Tık:</strong> Diğer modelleri seç</p>
+            <p><strong>Shift+WASD:</strong> Seçili modeli hareket ettir</p>
+            <p><strong>Güneş:</strong> Sol panelden konumunu ayarla</p>
+            <p><strong>Gölgeler:</strong> Güneş hareketiyle değişir</p>            <p><strong>🏺 Hiyeroglif:</strong> Duvar panellerine tıkla</p>
+            <p><strong>🐪 Deve:</strong> Alt soldaki butona tıkla</p>
+            <p><strong>🏺 Mezar:</strong> Piramide tıkla ve bulmacayı çöz</p>
+            <hr style="border-color: #444;">
+            <p id="selectedModel">Seçili Model: Yok</p>
+            <p id="characterStatus">Karakter: Bekliyor</p>
+        </div>
+<<<<<<< HEAD
+          <!-- Hiyeroglif Panelleri -->
+        <div class="hieroglyph-panels-container">
+            <div class="hieroglyph-panel" id="panel1">𓈖</div>
+            <div class="hieroglyph-panel" id="panel2">𓅓</div>
+            <div class="hieroglyph-panel" id="panel3">𓂀</div>
+            <div class="hieroglyph-panel" id="panel4">𓊪</div>
+            <div class="hieroglyph-panel" id="panel5">𓈙</div>
+            <div class="hieroglyph-panel" id="panel6">𓆣</div>
+        </div>
+=======
+        
+        <!-- Hiyeroglif Panelleri -->
+        <div class="hieroglyph-panel" id="panel1" style="top: 20%; left: 5%;">𓈖</div>
+        <div class="hieroglyph-panel" id="panel2" style="top: 40%; left: 5%;">𓅓</div>
+        <div class="hieroglyph-panel" id="panel3" style="top: 60%; left: 5%;">𓂀</div>
+        <div class="hieroglyph-panel" id="panel4" style="top: 20%; right: 5%;">𓊪</div>
+        <div class="hieroglyph-panel" id="panel5" style="top: 40%; right: 5%;">𓈙</div>
+        <div class="hieroglyph-panel" id="panel6" style="top: 60%; right: 5%;">𓆣</div>
+>>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
+        
+        <!-- Hiyeroglif Bilgi Paneli -->
+        <div id="hieroglyphInfo" class="hieroglyph-info">
+            <button class="close-btn" onclick="closeHieroglyphInfo()">×</button>
+            <h3 id="hieroglyphTitle">Hiyeroglif Simgesi</h3>
+            <p id="hieroglyphDescription">Bu antik Mısır sembolü hakkında bilgi...</p>
+            <div class="hieroglyph-puzzle">
+                <h4>🧩 Mini Bulmaca: Bu simge neyi temsil ediyor?</h4>
+                <div class="puzzle-options" id="puzzleOptions">
+                    <!-- Seçenekler dinamik olarak eklenecek -->
+                </div>
+                <p id="puzzleResult" style="margin-top: 10px; font-weight: bold;"></p>
+            </div>
+        </div>
+        
+<<<<<<< HEAD
+        <!-- Deve Gezintisi Kontrolleri -->        <div class="camel-controls">
+=======
+        <!-- Deve Gezintisi Kontrolleri -->
+        <div class="camel-controls">
+>>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
+            <h4 style="margin: 0 0 10px 0; color: #FFD700;">🐪 Deve Gezintisi</h4>
+            <button class="camel-btn" id="startCamelTour" onclick="startCamelTour()">Deve Turunu Başlat</button>
+            <button class="camel-btn" id="stopCamelTour" onclick="stopCamelTour()" disabled>Turu Durdur</button>
+            <p style="margin: 5px 0 0 0; font-size: 12px;">Kervan boyunca otomatik kamera hareketi</p>
+        </div>
+<<<<<<< HEAD
+
+        <!-- Vaha Keşfi (Oasis Discovery) Kontrolleri -->
+        <button class="oasis-info-toggle" onclick="toggleOasisMode()">🌴 Vaha Keşfi</button>
+        
+        <div class="discovery-counter" id="discoveryCounter">
+            <h4>🌊 Keşfedilen</h4>
+            <div>Bitkiler: <span id="plantsDiscovered">0</span>/5</div>
+            <div>Su Kaynakları: <span id="waterDiscovered">0</span>/3</div>
+        </div>
+
+        <!-- Bitki İndikatörleri -->
+        <div class="plant-indicator" id="plant1" style="top: 200px; left: 300px;" onclick="discoverPlant(1)"></div>
+        <div class="plant-indicator" id="plant2" style="top: 150px; left: 500px;" onclick="discoverPlant(2)"></div>
+        <div class="plant-indicator" id="plant3" style="top: 250px; left: 700px;" onclick="discoverPlant(3)"></div>
+        <div class="plant-indicator" id="plant4" style="top: 180px; left: 600px;" onclick="discoverPlant(4)"></div>
+        <div class="plant-indicator" id="plant5" style="top: 220px; left: 400px;" onclick="discoverPlant(5)"></div>
+
+        <!-- Su Kaynağı İndikatörleri -->
+        <div class="water-indicator" id="water1" style="top: 300px; left: 450px;" onclick="discoverWater(1)"></div>
+        <div class="water-indicator" id="water2" style="top: 350px; left: 550px;" onclick="discoverWater(2)"></div>
+        <div class="water-indicator" id="water3" style="top: 280px; left: 350px;" onclick="discoverWater(3)"></div>
+
+        <!-- Vaha Bilgi Paneli -->
+        <div class="oasis-panel" id="oasisPanel">
+            <button class="close-btn" onclick="closeOasisPanel()">×</button>
+            <h3 id="oasisTitle">🌴 Keşif Bilgisi</h3>
+            <div id="oasisContent">
+                <p>Çölün ortasında bulduğunuz bu vaha, binlerce yıldır yolcuları ağırlamış.</p>
+            </div>
+        </div>
+
+=======
+>>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
+          <!-- Kum Fırtınası Overlay -->
+        <div id="sandstormOverlay" class="sandstorm-overlay"></div>
+        
+        <!-- Gizli Mezar Bulmacası -->
+        <div id="tombPuzzle" class="tomb-puzzle">
+            <h2>🏺 Gizli Mezar Girişi</h2>
+            <p>Mezara girebilmek için hiyeroglifleri doğru sırada seçin:</p>
+            <p style="font-style: italic; color: #FFD700;">"Güneş, Su, İnsan, Bilgelik"</p>
+            
+            <div class="hieroglyph-sequence">
+                <div class="sequence-slot" id="slot1">
+                    <div class="sequence-number">1</div>
+                </div>
+                <div class="sequence-slot" id="slot2">
+                    <div class="sequence-number">2</div>
+                </div>
+                <div class="sequence-slot" id="slot3">
+                    <div class="sequence-number">3</div>
+                </div>
+                <div class="sequence-slot" id="slot4">
+                    <div class="sequence-number">4</div>
+                </div>
+            </div>
+            
+            <div class="available-hieroglyphs">
+                <div class="selectable-hieroglyph" data-symbol="𓈙" data-meaning="sun">𓈙</div>
+                <div class="selectable-hieroglyph" data-symbol="𓈖" data-meaning="water">𓈖</div>
+                <div class="selectable-hieroglyph" data-symbol="𓂀" data-meaning="human">𓂀</div>
+                <div class="selectable-hieroglyph" data-symbol="𓅓" data-meaning="wisdom">𓅓</div>
+                <div class="selectable-hieroglyph" data-symbol="𓊪" data-meaning="grain">𓊪</div>
+                <div class="selectable-hieroglyph" data-symbol="𓆣" data-meaning="eagle">𓆣</div>
+            </div>
+            
+            <div class="puzzle-status" id="puzzleStatus"></div>
+            
+            <div class="puzzle-controls">
+                <button class="puzzle-btn" onclick="resetTombPuzzle()">Temizle</button>
+                <button class="puzzle-btn" onclick="checkTombSequence()">Kontrol Et</button>
+                <button class="puzzle-btn" onclick="closeTombPuzzle()">Kapat</button>
+            </div>
+        </div>
+        
+        <!-- Mezar Turu Overlay -->
+        <div id="tombTourOverlay" class="tomb-tour-overlay">
+            <div class="tomb-tour-text" id="tombTourText">
+                Gizli mezara giriyorsunuz...
+            </div>
+<<<<<<< HEAD
+        </div>
+        
+        <!-- Vaha Keşfi Overlay -->
+        <div id="oasisDiscovery" class="oasis-panel">
+            <h3>🌴 Vaha Keşfi</h3>
+            <p>Bu alanda antik bir vahanın kalıntılarını keşfettiniz.</p>
+            <p>Vahalar, eski Mısır'da yaşamın sürdüğü yerlerdi.</p>
+            <p>Burada su kaynakları ve çeşitli bitkiler bulunmaktaydı.</p>
+            <div class="environmental-stat">
+                <div class="stat-label">Su Seviyesi:</div>
+                <div id="waterLevel" class="stat-value">Orta</div>
+            </div>
+            <div class="environmental-stat">
+                <div class="stat-label">Bitki Örtüsü:</div>
+                <div id="plantLife" class="stat-value">Zengin</div>
+            </div>
+            <div class="discovery-counter" id="oasisDiscoveryCounter">
+                <h4>Keşif Bilgileri</h4>
+                <div>Su Kaynağı: <span id="waterSourceCount">0</span></div>
+                <div>Bitki Türü: <span id="plantSpeciesCount">0</span></div>
+            </div>
+            <button class="oasis-info-toggle" id="toggleOasisInfo">Bilgi Göster/Gizle</button>
+=======
+>>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
+        </div>
+    </div>
+
+    <!-- Import Map -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
+        "three/examples/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/"
+      }
+    }
+    </script>
+
+    <!-- Ana JavaScript Dosyası -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+<script>
+// updateSelectedModel fonksiyonunu güncelle
+function updateSelectedModel() {
+    if (!selectedModel) return;
+    
+    // Sadece Shift tuşu basılıyken seçili modeli hareket ettir
+    if (!(event && event.shiftKey)) return;
+    
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    
+    const cameraRight = new THREE.Vector3();
+    cameraRight.crossVectors(camera.up, cameraDirection).normalize();
+    
+    const moveVector = new THREE.Vector3();
+    
+    if (keys.w) moveVector.add(cameraDirection.clone().multiplyScalar(-1));
+    if (keys.s) moveVector.add(cameraDirection);
+    if (keys.a) moveVector.add(cameraRight.clone().multiplyScalar(-1));
+    if (keys.d) moveVector.add(cameraRight);
+    
+    moveVector.y = 0;
+    moveVector.normalize();
+    moveVector.multiplyScalar(moveSpeed);
+    
+    selectedModel.position.add(moveVector);
+    
+    const maxDistance = 23;
+    selectedModel.position.x = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.x));
+    selectedModel.position.z = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.z));
+}
+
+// Key event'lerini güncelle
+function onKeyDown(event) {
+    const key = event.key.toLowerCase();
+    if (keys.hasOwnProperty(key)) {
+        keys[key] = true;
+        event.preventDefault();
+        
+        // Karakter durumunu güncelle
+        updateCharacterStatus();
+    }
+}
+
+function onKeyUp(event) {
+    const key = event.key.toLowerCase();
+    if (keys.hasOwnProperty(key)) {
+        keys[key] = false;
+        event.preventDefault();
+        
+        // Karakter durumunu güncelle
+        updateCharacterStatus();
+    }
+}
+
+function updateCharacterStatus() {
+    const statusElement = document.getElementById('characterStatus');
+    if (keys.w || keys.a || keys.s || keys.d) {
+        statusElement.textContent = 'Karakter: Yürüyor';
+    } else {
+        statusElement.textContent = 'Karakter: Bekliyor';
+    }
+}
+</script>
