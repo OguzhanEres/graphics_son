@@ -70,15 +70,16 @@ const chamberData = {
         { position: { x: 4, y: 2.5, z: -2 }, target: { x: -2, y: 1, z: -1 }, duration: 3000, description: "Değerli hazineler ve altın eşyalar..." },
         { position: { x: 0, y: 4, z: -5 }, target: { x: 0, y: 0, z: 0 }, duration: 4000, description: "Oda'nın tamamını görüyorsunuz..." },
         { position: { x: -1, y: 1, z: 2 }, target: { x: 0, y: 0.5, z: -3 }, duration: 2000, description: "Sandukaya yakından bakıyorsunuz..." }
-    ],
-    ambientData: {
+    ],    ambientData: {
         soundEffects: ['tomb_echo', 'ancient_whispers', 'treasure_shimmer'],
-        lightIntensity: 0.15,
+        lightIntensity: 0.45, // Işık yoğunluğunu artırıyoruz
         torchPositions: [
-            { x: -3, y: 2, z: -3 },
-            { x: 3, y: 2, z: -3 },
-            { x: -3, y: 2, z: 3 },
-            { x: 3, y: 2, z: 3 }
+            { x: -3.5, y: 2.5, z: -3.5 }, // Köşe meşaleleri daha köşeye
+            { x: 3.5, y: 2.5, z: -3.5 },
+            { x: -3.5, y: 2.5, z: 3.5 },
+            { x: 3.5, y: 2.5, z: 3.5 },
+            { x: 0, y: 2.5, z: -3.8 }, // Ek merkez meşaleler
+            { x: 0, y: 2.5, z: 3.8 }
         ]
     }
 };
@@ -804,13 +805,30 @@ function animate() {
         updateTombTour();
     }
     
-    // Gizli oda için sadece alev animasyonu
+    // Gizli oda için işlemler
     if (hiddenChamberTourActive) {
-        animateFlames();
+        if (!hiddenChamberScene) {
+            console.error('Hata: Gizli oda turu aktif ama hiddenChamberScene yok!');
+        } else if (!hiddenChamberScene.visible) {
+            console.log('Gizli oda turu aktif ama sahne görünür değil, görünür yapılıyor...');
+            hiddenChamberScene.visible = true;
+        }
+        
+        // Meşale alevlerini canlandır
+        try {
+            animateFlames();
+        } catch (error) {
+            console.error('Alev animasyonu çalıştırılırken hata oluştu:', error);
+        }
+        
+        // Kamera hareketini güncelle (serbest dolaşım için)
+        controls.update();
     }
     
     controls.update();
     updateSelectedModel();
+    
+    // Render - tüm sahneyi çizdir
     renderer.render(scene, camera);
 }
 
@@ -826,6 +844,13 @@ function updateLightPosition() {
         // Güneş görsel temsilini de güncelle
         sun.position.copy(directionalLight.position);
     }
+}
+
+// Mezar turu animasyonunu güncelle
+function updateTombTour() {
+    // Placeholder for tomb tour animation
+    // This function can be implemented based on specific tour requirements
+    console.log('Tomb tour update called');
 }
 
 // Hiyeroglif panelleri için event listener'ları ayarla
@@ -1157,53 +1182,32 @@ window.closeTombPuzzle = closeTombPuzzle;
 window.resetTombPuzzle = resetTombPuzzle;
 window.checkTombSequence = checkTombSequence;
 
-// Gizli Oda Turu Fonksiyonları
-
-// Yardımcı fonksiyonlar
-function createStoneTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const context = canvas.getContext('2d');
+// Karakter animasyon yönetimi
+function updateCharacterAnimation() {
+    if (!characterMixer || !selectedModel || selectedModel.name !== 'WalkingCharacter') return;
     
-    // Taş dokusu oluştur
-    context.fillStyle = '#8B7355';
-    context.fillRect(0, 0, 128, 128);
+    const isMoving = keys.w || keys.s || keys.a || keys.d;
     
-    // Rastgele noktalar ekle
-    for (let i = 0; i < 50; i++) {
-        context.fillStyle = `rgb(${120 + Math.random() * 40}, ${100 + Math.random() * 40}, ${60 + Math.random() * 40})`;
-        context.fillRect(Math.random() * 128, Math.random() * 128, 2, 2);
+    if (isMoving && !wasMoving) {
+        // Idle'dan walk'a geçiş
+        if (characterAnimations.idle && characterAnimations.walk) {
+            characterAnimations.idle.fadeOut(0.2);
+            characterAnimations.walk.reset().fadeIn(0.2).play();
+            currentAction = characterAnimations.walk;
+        }
+        wasMoving = true;
+    } else if (!isMoving && wasMoving) {
+        // Walk'tan idle'a geçiş
+        if (characterAnimations.walk && characterAnimations.idle) {
+            characterAnimations.walk.fadeOut(0.2);
+            characterAnimations.idle.reset().fadeIn(0.2).play();
+            currentAction = characterAnimations.idle;
+        }
+        wasMoving = false;
     }
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(2, 2);
-    return texture;
 }
 
-function createTextTexture(text, color = '#000000') {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const context = canvas.getContext('2d');
-    
-    // Arka plan
-    context.fillStyle = '#F4A460';
-    context.fillRect(0, 0, 128, 128);
-    
-    // Metin
-    context.fillStyle = color;
-    context.font = 'bold 60px Arial';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText(text, 64, 64);
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    return texture;
-}
-
+// Gizli Oda Turu Fonksiyonları
 function createHiddenChamberScene() {
     // Yeni bir container grup oluştur
     hiddenChamberScene = new THREE.Group();
@@ -1427,7 +1431,7 @@ function createTreasureChests() {
         const goldGeometry = new THREE.SphereGeometry(0.1, 8, 8);
         const goldMaterial = new THREE.MeshPhongMaterial({
             color: 0xFFD700,
-            emissive: 0xFFD700,
+            emissive: 0x222200,
             shininess: 100
         });
         
@@ -1558,63 +1562,77 @@ function createChamberLighting() {
     chamberLights.push(chamberSarcophagusLight);
 }
 
-// Basitleştirilmiş animasyon geçiş fonksiyonları
-function transitionToAnimation(targetAction, duration = 0.3) {
-    if (!targetAction || !characterMixer) {
-        console.log('Hedef animasyon veya mixer bulunamadı!');
-        return;
+// Yardımcı fonksiyonlar - tekstür oluşturma
+function createStoneTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    
+    // Taş dokusu oluştur
+    context.fillStyle = '#8B7355';
+    context.fillRect(0, 0, 256, 256);
+    
+    // Rastgele taş detayları
+    for (let i = 0; i < 50; i++) {
+        context.fillStyle = `rgb(${120 + Math.random() * 40}, ${100 + Math.random() * 40}, ${70 + Math.random() * 30})`;
+        context.fillRect(Math.random() * 256, Math.random() * 256, Math.random() * 20 + 5, Math.random() * 20 + 5);
     }
     
-    if (targetAction === currentAction) {
-        // Aynı animasyon - sadece çalıştığından emin ol
-        if (!targetAction.isRunning()) {
-            targetAction.reset();
-            targetAction.play();
-            console.log('Aynı animasyon yeniden başlatıldı:', targetAction.getClip().name);
-        }
-        return;
-    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2, 2);
     
-    // Önceki animasyonu yumuşak bir şekilde durdur
-    if (currentAction && currentAction.isRunning()) {
-        currentAction.fadeOut(duration);
-        currentAction.crossFadeTo(targetAction, duration, true);
-    } else {
-        // İlk animasyon - direkt başlat
-        targetAction.reset();
-        targetAction.fadeIn(duration);
-        targetAction.play();
-    }
-    
-    currentAction = targetAction;
-    console.log('Animasyon geçişi:', targetAction.getClip().name);
+    return texture;
 }
 
-function updateCharacterAnimation() {
-    if (!characterMixer || !selectedModel || selectedModel.name !== 'WalkingCharacter') {
-        return;
+function createWoodTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    
+    // Ahşap dokusu oluştur
+    const gradient = context.createLinearGradient(0, 0, 256, 0);
+    gradient.addColorStop(0, '#8B4513');
+    gradient.addColorStop(0.5, '#A0522D');
+    gradient.addColorStop(1, '#8B4513');
+    
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 256, 256);
+    
+    // Ahşap damarları
+    for (let i = 0; i < 20; i++) {
+        context.strokeStyle = '#654321';
+        context.lineWidth = Math.random() * 3 + 1;
+        context.beginPath();
+        context.moveTo(0, Math.random() * 256);
+        context.lineTo(256, Math.random() * 256);
+        context.stroke();
     }
     
-    const currentlyMoving = keys.w || keys.s || keys.a || keys.d;
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createTextTexture(text, color = '#FFD700') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const context = canvas.getContext('2d');
     
-    // Sadece hareket durumu değişikliklerinde animasyon değiştir
-    if (currentlyMoving !== wasMoving) {
-        if (currentlyMoving) {
-            // Harekete başlıyor - walk animasyonuna geç
-            if (characterAnimations.walk) {
-                transitionToAnimation(characterAnimations.walk, 0.25);
-                console.log('Walk animasyonuna geçildi');
-            }
-        } else {
-            // Duruyor - idle animasyonuna geç
-            if (characterAnimations.idle) {
-                transitionToAnimation(characterAnimations.idle, 0.25);
-                console.log('Idle animasyonuna geçildi');
-            }
-        }
-        
-        wasMoving = currentlyMoving;
-    }
+    // Arka plan
+    context.fillStyle = 'rgba(0, 0, 0, 0)';
+    context.fillRect(0, 0, 128, 128);
+    
+    // Metin
+    context.fillStyle = color;
+    context.font = 'bold 60px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, 64, 64);
+    
+    return new THREE.CanvasTexture(canvas);
 }
 
 function startHiddenChamberTour() {
@@ -1834,7 +1852,7 @@ function onSarcophagusClick() {
             lid.rotation.x = THREE.MathUtils.lerp(
                 openAnimation.startRotation,
                 openAnimation.targetRotation,
-                               easeProgress
+                easeProgress
             );
             
             if (progress < 1) {
@@ -1845,9 +1863,6 @@ function onSarcophagusClick() {
         animateLid();
         
         // Sanduka açıldığında altın parıltı efekti
-
-       
-
         setTimeout(() => {
             addTreasureSparkles();
         }, 1000);
