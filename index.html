@@ -760,8 +760,8 @@
             <p><strong>Sol Tık:</strong> Diğer modelleri seç</p>
             <p><strong>Shift+WASD:</strong> Seçili modeli hareket ettir</p>
             <p><strong>Güneş:</strong> Sol panelden konumunu ayarla</p>
-            <p><strong>Gölgeler:</strong> Güneş hareketiyle değişir</p>            <p><strong>🏺 Hiyeroglif:</strong> Duvar panellerine tıkla</p>
-            <p><strong>🐪 Deve:</strong> Alt soldaki butona tıkla</p>
+            <p><strong>Gölgeler:</strong> Güneş hareketiyle değişir</p>            
+            <p><strong>🏺 Hiyeroglif:</strong> Duvar panellerine tıkla</p>
             <p><strong>🏺 Mezar:</strong> Piramide tıkla ve bulmacayı çöz</p>
             <hr style="border-color: #444;">
             <p id="selectedModel">Seçili Model: Yok</p>
@@ -858,36 +858,7 @@
                 <button class="puzzle-btn" onclick="checkTombSequence()">Kontrol Et</button>
                 <button class="puzzle-btn" onclick="closeTombPuzzle()">Kapat</button>
             </div>
-        </div>
-        
-        <!-- Mezar Turu Overlay -->
-        <div id="tombTourOverlay" class="tomb-tour-overlay">
-            <div class="tomb-tour-text" id="tombTourText">
-                Gizli mezara giriyorsunuz...
-            </div>
-        </div>
-        
-        <!-- Vaha Keşfi Overlay -->
-        <div id="oasisDiscovery" class="oasis-panel">
-            <h3>🌴 Vaha Keşfi</h3>
-            <p>Bu alanda antik bir vahanın kalıntılarını keşfettiniz.</p>
-            <p>Vahalar, eski Mısır'da yaşamın sürdüğü yerlerdi.</p>
-            <p>Burada su kaynakları ve çeşitli bitkiler bulunmaktaydı.</p>
-            <div class="environmental-stat">
-                <div class="stat-label">Su Seviyesi:</div>
-                <div id="waterLevel" class="stat-value">Orta</div>
-            </div>
-            <div class="environmental-stat">
-                <div class="stat-label">Bitki Örtüsü:</div>
-                <div id="plantLife" class="stat-value">Zengin</div>
-            </div>
-            <div class="discovery-counter" id="oasisDiscoveryCounter">
-                <h4>Keşif Bilgileri</h4>
-                <div>Su Kaynağı: <span id="waterSourceCount">0</span></div>
-                <div>Bitki Türü: <span id="plantSpeciesCount">0</span></div>
-            </div>
-            <button class="oasis-info-toggle" id="toggleOasisInfo">Bilgi Göster/Gizle</button>
-        </div>
+        </div>  
     </div>
 
     <!-- Import Map -->

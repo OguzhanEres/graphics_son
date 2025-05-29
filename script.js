@@ -20,7 +20,7 @@ const totalModels = 5; // Statue + 3 Piramit + WalkingCharacter
 let mixer; // Hurricane_Kick için animasyon mixer'ı
 let walkAction; // Hurricane_Kick yürüme animasyonu
 let idleAction; // Durma animasyonu (varsa)
-
+const actions = {};
 // Basitleştirilmiş animasyon sistemi değişkenleri
 let characterAnimations = {
     idle: null,        // Standing Idle.fbx
@@ -43,7 +43,7 @@ let sandstormActive = false;
 // Mezar bulmacası için değişkenler
 let tombPuzzleActive = false;
 let selectedSequence = [];
-let correctSequence = ['sun', 'water', 'human', 'wisdom']; // Güneş, Su, İnsan, Bilgelik
+let correctSequence = ['sun', 'water', 'human', 'wisdom']; 
 let tombTourActive = false;
 let tombTourStartTime = 0;
 let tombTourDuration = 12000; // 12 saniye
@@ -460,20 +460,19 @@ function loadCharacterWithAnimations() {
                 }
             });
               // AnimationMixer oluştur
-            characterMixer = new THREE.AnimationMixer(object);
-              // Idle animasyonunu ayarla
+            characterMixer = new THREE.AnimationMixer(object);            // Standing Idle.fbx animasyonunu ayarla
             if (object.animations && object.animations.length > 0) {
-                console.log('Idle animasyon bulundu:', object.animations[0].name);
+                console.log('Standing Idle.fbx animasyon bulundu:', object.animations[0].name);
                 characterAnimations.idle = characterMixer.clipAction(object.animations[0]);
                 characterAnimations.idle.setLoop(THREE.LoopRepeat);
                 characterAnimations.idle.timeScale = 1.0; // Normal hız
                 characterAnimations.idle.clampWhenFinished = false;
                 characterAnimations.idle.reset();
-                characterAnimations.idle.play(); // Başlangıçta idle çalsın
+                characterAnimations.idle.play(); // Başlangıçta Standing Idle çalsın
                 currentAction = characterAnimations.idle;
-                console.log('Idle animasyon başlatıldı');
+                console.log('Standing Idle.fbx animasyon başlatıldı - karakter duruyor');
             } else {
-                console.log('Idle animasyon bulunamadı!');
+                console.log('Standing Idle.fbx animasyon bulunamadı!');
             }
             
             object.name = 'WalkingCharacter';
@@ -494,20 +493,20 @@ function loadCharacterWithAnimations() {
             checkAnimationLoadComplete();
         }
     );
-    
-    // Walk animasyonunu yükle
+      // Female Walk.fbx animasyonunu yükle
     fbxLoader.load(
         './Female Walk.fbx',
         (object) => {
-            console.log('Walk animasyon yüklendi');            if (characterMixer && object.animations && object.animations.length > 0) {
-                console.log('Walk animasyon bulundu:', object.animations[0].name);
+            console.log('Female Walk.fbx yüklendi');
+            if (characterMixer && object.animations && object.animations.length > 0) {
+                console.log('Female Walk.fbx animasyon bulundu:', object.animations[0].name);
                 characterAnimations.walk = characterMixer.clipAction(object.animations[0]);
                 characterAnimations.walk.setLoop(THREE.LoopRepeat);
-                characterAnimations.walk.timeScale = 0.8; // Biraz daha yavaş yürüme
+                characterAnimations.walk.timeScale = 1.0; // Normal yürüme hızı
                 characterAnimations.walk.clampWhenFinished = false;
-                console.log('Walk animasyon hazırlandı');
+                console.log('Female Walk.fbx animasyon hazırlandı - yürüme için');
             } else {
-                console.log('Walk animasyon bulunamadı!');
+                console.log('Female Walk.fbx animasyon bulunamadı!');
             }
             loadedAnimations++;
             checkAnimationLoadComplete();
@@ -702,10 +701,33 @@ function deselectModel(model) {
 function onKeyDown(event) {
     const key = event.key.toLowerCase();
     
-    // ESC tuşu ile gizli odadan çık
-    if (event.key === 'Escape' && hiddenChamberTourActive) {
-        stopHiddenChamberTour();
-        return;
+    // ESC tuşu ile gizli odadan çık - öncelik
+    if (event.key === 'Escape') {
+        console.log('ESC tuşuna basıldı, durum kontrol ediliyor...');
+        console.log('hiddenChamberTourActive:', hiddenChamberTourActive);
+        
+        if (hiddenChamberTourActive) {
+            console.log('ESC tuşuna basıldı - gizli odadan çıkılıyor...');
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Çift güvenlik: önce normal çıkış, çalışmazsa acil çıkış
+            try {
+                stopHiddenChamberTour();
+                
+                // 500ms sonra kontrol et, hala gizli odadaysa acil çıkış yap
+                setTimeout(() => {
+                    if (hiddenChamberTourActive) {
+                        console.log('Normal çıkış başarısız - acil durum çıkışı yapılıyor!');
+                        emergencyExitHiddenChamber();
+                    }
+                }, 500);
+            } catch (error) {
+                console.error('Normal çıkış hatası:', error);
+                emergencyExitHiddenChamber();
+            }
+            return;
+        }
     }
     
     if (keys.hasOwnProperty(key)) {
@@ -729,7 +751,7 @@ function updateCharacterStatus() {
     if (statusElement) {
         if (selectedModel && selectedModel.name === 'WalkingCharacter') {
             if (keys.w || keys.a || keys.s || keys.d) {
-                statusElement.textContent = 'Karakter: Yürüyor';
+                statusElement.textContent = 'Karakter: Yürüyor ';
             } else {
                 statusElement.textContent = 'Karakter: Duruyor';
             }
@@ -1183,25 +1205,28 @@ window.resetTombPuzzle = resetTombPuzzle;
 window.checkTombSequence = checkTombSequence;
 
 // Karakter animasyon yönetimi
+// Karakter animasyon yönetimi
 function updateCharacterAnimation() {
     if (!characterMixer || !selectedModel || selectedModel.name !== 'WalkingCharacter') return;
     
     const isMoving = keys.w || keys.s || keys.a || keys.d;
     
     if (isMoving && !wasMoving) {
-        // Idle'dan walk'a geçiş
+        // Standing Idle.fbx'ten Female Walk.fbx'e geçiş
         if (characterAnimations.idle && characterAnimations.walk) {
-            characterAnimations.idle.fadeOut(0.2);
-            characterAnimations.walk.reset().fadeIn(0.2).play();
+            characterAnimations.idle.fadeOut(0.3);
+            characterAnimations.walk.reset().fadeIn(0.3).play();
             currentAction = characterAnimations.walk;
+            console.log('Karakter yürümeye başladı - Female Walk.fbx animasyonu çalıyor');
         }
         wasMoving = true;
     } else if (!isMoving && wasMoving) {
-        // Walk'tan idle'a geçiş
+        // Female Walk.fbx'ten Standing Idle.fbx'e geçiş
         if (characterAnimations.walk && characterAnimations.idle) {
-            characterAnimations.walk.fadeOut(0.2);
-            characterAnimations.idle.reset().fadeIn(0.2).play();
+            characterAnimations.walk.fadeOut(0.3);
+            characterAnimations.idle.reset().fadeIn(0.3).play();
             currentAction = characterAnimations.idle;
+            console.log('Karakter durdu - Standing Idle.fbx animasyonu çalıyor');
         }
         wasMoving = false;
     }
@@ -1458,15 +1483,14 @@ function createTreasureChests() {
 
 function createChamberLighting() {
     chamberLights = [];
-    chamberTorchLights = [];
-      // Daha güçlü ambient ışık - odayı daha aydınlık yapmak için
-    chamberAmbientLight = new THREE.AmbientLight(0x606060, 2.0); // 1.5'ten 2.0'a artırıldı, renk daha açık
+    chamberTorchLights = [];    // Ana sahneden daha parlak ambient ışık
+    chamberAmbientLight = new THREE.AmbientLight(0xffffff, 1.2); // Ana sahneden daha parlak (0.6'dan 1.2'ye)
     chamberAmbientLight.name = 'ChamberAmbient';
     hiddenChamberScene.add(chamberAmbientLight);
     chamberLights.push(chamberAmbientLight);
     
-    // Ana directional ışık - daha parlak yapıldı
-    chamberMainLight = new THREE.DirectionalLight(0xFFFFCC, 4.5); // 4.0'dan 4.5'e artırıldı, renk daha açık
+    // Ana sahneden daha güçlü directional ışık
+    chamberMainLight = new THREE.DirectionalLight(0xffffff, 1.8); // Ana sahneden daha parlak (0.9'dan 1.8'e)
     chamberMainLight.position.set(0, 8, 2); // Odanın üstünden aydınlatma
     chamberMainLight.castShadow = true;
     chamberMainLight.shadow.mapSize.width = 1024;
@@ -1478,29 +1502,35 @@ function createChamberLighting() {
     chamberMainLight.shadow.camera.top = 10;
     chamberMainLight.shadow.camera.bottom = -10;
     hiddenChamberScene.add(chamberMainLight);
-    chamberLights.push(chamberMainLight);    // Ek ışık kaynakları - odayı daha aydınlık yapmak için
-    const additionalLight1 = new THREE.DirectionalLight(0xFFFFDD, 2.5); // 1.8'den 2.5'e artırıldı
-    additionalLight1.position.set(-5, 6, 5);
-    hiddenChamberScene.add(additionalLight1);
-    chamberLights.push(additionalLight1);
+    chamberLights.push(chamberMainLight);    // Ana sahneden daha parlak HemisphereLight
+    const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x8B4513, 0.8); // 0.4'ten 0.8'e artırıldı
+    hemiLight.position.set(0, 20, 0);
+    hiddenChamberScene.add(hemiLight);
+    chamberLights.push(hemiLight);
     
-    const additionalLight2 = new THREE.DirectionalLight(0xFFFFDD, 2.5); // 1.8'den 2.5'e artırıldı
+    // Ana sahneden daha parlak ek ışık kaynakları
+    const frontLight = new THREE.DirectionalLight(0xffffff, 0.8); // 0.4'ten 0.8'e artırıldı
+    frontLight.position.set(0, 5, 15);
+    hiddenChamberScene.add(frontLight);
+    chamberLights.push(frontLight);    hiddenChamberScene.add(frontLight);
+    chamberLights.push(frontLight);
+    
+    const additionalLight2 = new THREE.DirectionalLight(0xffffff, 0.6); // 0.3'ten 0.6'ya artırıldı
     additionalLight2.position.set(5, 6, -5);
     hiddenChamberScene.add(additionalLight2);
     chamberLights.push(additionalLight2);
-    
-    // Yeni ekstra ışıklar - köşeleri ve duvarları aydınlatmak için
-    const cornerLight1 = new THREE.PointLight(0xFFDDAA, 1.5, 14);
+      // Köşe ışıkları - daha yumuşak
+    const cornerLight1 = new THREE.PointLight(0xffffff, 0.8, 12);
     cornerLight1.position.set(-3, 3, -3);
     hiddenChamberScene.add(cornerLight1);
     chamberLights.push(cornerLight1);
     
-    const cornerLight2 = new THREE.PointLight(0xFFDDAA, 1.5, 14);
+    const cornerLight2 = new THREE.PointLight(0xffffff, 0.8, 12);
     cornerLight2.position.set(3, 3, -3);
     hiddenChamberScene.add(cornerLight2);
-    chamberLights.push(cornerLight2);// Dekoratif meşale ışıkları (daha parlak yapıldı)
-    chamberData.ambientData.torchPositions.forEach((pos, index) => {        // Point light - daha da parlak yapıldı
-        const torchLight = new THREE.PointLight(0xFF7722, 2.2, 15, 2); // 1.5'ten 2.2'ye artırıldı, menzil 12'den 15'e
+    chamberLights.push(cornerLight2);// Dekoratif meşale ışıkları (ana sahne ile uyumlu seviyede)
+    chamberData.ambientData.torchPositions.forEach((pos, index) => {        // Point light - ana sahne ile uyumlu
+        const torchLight = new THREE.PointLight(0xFF7722, 1.0, 10, 1.5); // Daha yumuşak seviye
         torchLight.position.set(pos.x, pos.y, pos.z);
         torchLight.castShadow = true;
         torchLight.shadow.mapSize.width = 256;
@@ -1551,8 +1581,8 @@ function createChamberLighting() {
         innerFlame.userData = { originalScale: innerFlame.scale.clone(), type: 'innerFlame', lightRef: torchLight };
         chamberLights.push(flame);
         chamberLights.push(innerFlame);
-    });    // Sanduka spotlight'ı - çok daha parlak
-    chamberSarcophagusLight = new THREE.SpotLight(0xFFE24D, 3.0, 18, Math.PI / 7, 0.25, 2); // 2.0'dan 3.0'a artırıldı, menzil 15'ten 18'e
+    });    // Sanduka spotlight'ı - ana sahne ile uyumlu
+    chamberSarcophagusLight = new THREE.SpotLight(0xFFE24D, 1.5, 12, Math.PI / 6, 0.2, 1.5); // Daha yumuşak seviye
     chamberSarcophagusLight.position.set(0, 3.5, -2);
     chamberSarcophagusLight.target.position.set(0, 0.5, -2);
     chamberSarcophagusLight.castShadow = true;
@@ -1638,6 +1668,8 @@ function createTextTexture(text, color = '#FFD700') {
 function startHiddenChamberTour() {
     if (hiddenChamberTourActive) return;
     
+    console.log('Gizli Oda turu başlatılıyor...');
+    
     // Gizli oda sahnesi henüz oluşturulmadıysa oluştur
     if (!hiddenChamberScene) {
         createHiddenChamberScene();
@@ -1648,14 +1680,20 @@ function startHiddenChamberTour() {
     // Orijinal sahne verilerini kaydet
     originalCameraPosition.copy(camera.position);
     originalCameraTarget.copy(controls.target);
-      // Ana sahne objelerini gizle
+    console.log('Orijinal kamera pozisyonu kaydedildi:', originalCameraPosition);
+    console.log('Orijinal kamera target kaydedildi:', originalCameraTarget);
+    
+    // Ana sahne objelerini gizle
     models.forEach(model => {
         if (model) model.visible = false;
     });
     plane.visible = false;
     sun.visible = false;
-      // Gizli oda sahnesini göster
+    console.log('Ana sahne objeleri gizlendi');
+    
+    // Gizli oda sahnesini göster
     hiddenChamberScene.visible = true;
+    console.log('Gizli oda sahnesi gösterildi');
     
     // Gizli oda ışık kontrollerini göster
     showChamberLightControls();
@@ -1665,20 +1703,23 @@ function startHiddenChamberTour() {
     
     // Overlay'i göster
     const overlay = document.getElementById('tombTourOverlay');
-    overlay.classList.add('tomb-tour-active');
-      // Sahne ışığını artır
-    directionalLight.intensity = 0.5; // 0.3'ten 0.5'e artırıldı
-    ambientLight.intensity = 0.3; // 0.2'den 0.3'e artırıldı
+    if (overlay) {
+        overlay.classList.add('tomb-tour-active');
+        console.log('Tomb tour overlay gösterildi');
+    }
+    
+    // Sahne ışığını gizli oda ile uyumlu seviyede tut
+    directionalLight.intensity = 0.9; // Ana sahne ile aynı seviye
+    ambientLight.intensity = 0.6; // Ana sahne ile aynı seviye
     
     console.log('Gizli Oda - Serbest Keşif Modu başladı!');
     
     // Başlangıç kamera pozisyonunu ayarla
-    camera.position.set(0, 3, 8);
+    camera.position.set(0, 4, 3);
     controls.target.set(0, 1, 0);
     controls.update();
     
-    // Kullanım mesajını göster
-    document.getElementById('tombTourText').textContent = "Gizli odayı keşfedin! ESC tuşuna basarak çıkabilirsiniz.";
+    
 }
 
 function updateHiddenChamberTour() {
@@ -1776,19 +1817,33 @@ function easeInOutCubic(t) {
 function stopHiddenChamberTour() {
     if (!hiddenChamberTourActive) return;
     
+    console.log('Gizli Oda Keşfi durduruluyor...');
+    
     hiddenChamberTourActive = false;
     
     // Overlay'i gizle
     const overlay = document.getElementById('tombTourOverlay');
-    overlay.classList.remove('tomb-tour-active');
-      // Ana sahne objelerini geri göster
+    if (overlay) {
+        overlay.classList.remove('tomb-tour-active');
+        overlay.style.display = 'none'; // Zorla gizle
+        console.log('Tomb tour overlay gizlendi');
+    }
+    
+    // Ana sahne objelerini geri göster
     models.forEach(model => {
-        if (model) model.visible = true;
+        if (model) {
+            model.visible = true;
+        }
     });
-    plane.visible = true;
-    sun.visible = true;
-      // Gizli oda sahnesini gizle
-    if (hiddenChamberScene) hiddenChamberScene.visible = false;
+    if (plane) plane.visible = true;
+    if (sun) sun.visible = true;
+    console.log('Ana sahne objeleri geri gösterildi');
+    
+    // Gizli oda sahnesini gizle
+    if (hiddenChamberScene) {
+        hiddenChamberScene.visible = false;
+        console.log('Gizli oda sahnesi gizlendi');
+    }
     
     // Gizli oda ışık kontrollerini gizle
     hideChamberLightControls();
@@ -1796,17 +1851,33 @@ function stopHiddenChamberTour() {
     // Kamera kontrollerini etkin tut (zaten etkin)
     controls.enabled = true;
     
+    // Sahne arka planını orijinal renge döndür
+    scene.background = new THREE.Color(0x87CEEB);
+    
+    // Fog'u yeniden etkinleştir (eğer varsa)
+    scene.fog = null; // veya orijinal fog ayarınız
+    
+    // Renderer'ı zorla güncelle
+    renderer.setClearColor(0x87CEEB);
+    
     // Kamera pozisyonunu orijinal haline getir (smooth transition)
     animateToOriginalPosition();
     
-    // Işıkları normale döndür
-    directionalLight.intensity = 1.5;
-    ambientLight.intensity = 0.4;
+    // Işıkları ana sahne seviyesine döndür
+    if (directionalLight) directionalLight.intensity = 0.9;
+    if (ambientLight) ambientLight.intensity = 0.6;
+    
+    // Zorla render et
+    renderer.render(scene, camera);
     
     console.log('Gizli Oda Keşfi tamamlandı!');
 }
 
 function animateToOriginalPosition() {
+    console.log('Kamera orijinal pozisyona döndürülüyor...');
+    console.log('Başlangıç pozisyonu:', camera.position);
+    console.log('Hedef pozisyon:', originalCameraPosition);
+    
     const startPos = camera.position.clone();
     const startTarget = controls.target.clone();
     const duration = 2000;
@@ -1823,6 +1894,9 @@ function animateToOriginalPosition() {
         
         if (progress < 1) {
             requestAnimationFrame(animateStep);
+        } else {
+            console.log('Kamera animasyonu tamamlandı');
+            console.log('Final pozisyon:', camera.position);
         }
     }
     
@@ -2041,15 +2115,15 @@ function updateChamberLighting() {
 }
 
 function resetChamberLights() {
-    // Varsayılan değerlere sıfırla - daha parlak yeni değerlerle
-    document.getElementById('chamberMainIntensity').value = 4.0;
-    document.getElementById('chamberMainIntensityValue').value = 4.0;
-    document.getElementById('chamberAmbientIntensity').value = 1.5;
-    document.getElementById('chamberAmbientIntensityValue').value = 1.5;
-    document.getElementById('chamberTorchIntensity').value = 1.5;
-    document.getElementById('chamberTorchIntensityValue').value = 1.5;
-    document.getElementById('chamberSarcophagusIntensity').value = 2.0;
-    document.getElementById('chamberSarcophagusIntensityValue').value = 2.0;
+    // Ana sahne ile uyumlu varsayılan değerler
+    document.getElementById('chamberMainIntensity').value = 0.9;
+    document.getElementById('chamberMainIntensityValue').value = 0.9;
+    document.getElementById('chamberAmbientIntensity').value = 0.6;
+    document.getElementById('chamberAmbientIntensityValue').value = 0.6;
+    document.getElementById('chamberTorchIntensity').value = 1.0;
+    document.getElementById('chamberTorchIntensityValue').value = 1.0;
+    document.getElementById('chamberSarcophagusIntensity').value = 1.5;
+    document.getElementById('chamberSarcophagusIntensityValue').value = 1.5;
     document.getElementById('chamberMainX').value = 0;
     document.getElementById('chamberMainY').value = 8;
     document.getElementById('chamberMainZ').value = 2;
@@ -2072,6 +2146,48 @@ function hideChamberLightControls() {
         controlPanel.classList.remove('active');
         chamberLightControlsActive = false;
     }
+}
+
+// Acil durum çıkış fonksiyonu - anlık geri dönüş
+function emergencyExitHiddenChamber() {
+    console.log('ACİL DURUM ÇIKIŞI - Anlık geri dönüş!');
+    
+    hiddenChamberTourActive = false;
+    
+    // Overlay'i anlık gizle
+    const overlay = document.getElementById('tombTourOverlay');
+    if (overlay) {
+        overlay.classList.remove('tomb-tour-active');
+        overlay.style.display = 'none';
+    }
+    
+    // Ana sahne objelerini anlık göster
+    models.forEach(model => {
+        if (model) model.visible = true;
+    });
+    if (plane) plane.visible = true;
+    if (sun) sun.visible = true;
+    
+    // Gizli oda sahnesini anlık gizle
+    if (hiddenChamberScene) hiddenChamberScene.visible = false;
+    
+    // Kamera pozisyonunu anlık döndür
+    camera.position.copy(originalCameraPosition);
+    controls.target.copy(originalCameraTarget);
+    controls.update();
+    
+    // Sahne ayarlarını orijinal haline döndür
+    scene.background = new THREE.Color(0x87CEEB);
+    renderer.setClearColor(0x87CEEB);
+    
+    // Işıkları orijinal haline döndür
+    if (directionalLight) directionalLight.intensity = 0.9;
+    if (ambientLight) ambientLight.intensity = 0.6;
+    
+    // Kontrolleri etkinleştir
+    controls.enabled = true;
+    
+    console.log('Acil durum çıkışı tamamlandı!');
 }
 
 // Başlat
