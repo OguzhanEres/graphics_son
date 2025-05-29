@@ -6,7 +6,6 @@ import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader.js';
 // Global değişkenler
 let scene, camera, renderer, controls;
 let plane, sun, directionalLight, ambientLight;
-let terrainModel = null; // FBX terrain modeli için
 let selectedModel = null;
 const models = [];
 const raycaster = new THREE.Raycaster();
@@ -15,7 +14,7 @@ const keys = { w: false, a: false, s: false, d: false };
 const moveSpeed = 0.15; // Diğer modeller için
 const walkingCharacterSpeed = 0.05; // Walking karakteri için yavaş hız
 let loadedModels = 0;
-const totalModels = 4; // 4 model olacak (deve dahil)
+const totalModels = 6; // 6 model olacak (3 piramit + statue + walking model + deve)
 
 // Animasyon için yeni değişkenler
 let mixer; // Hurricane_Kick için animasyon mixer'ı
@@ -187,13 +186,12 @@ function setupLighting() {
     directionalLight.position.set(5, 10, 5);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 50;
-    directionalLight.shadow.camera.left = -20;
-    directionalLight.shadow.camera.right = 20;
-    directionalLight.shadow.camera.top = 20;
-    directionalLight.shadow.camera.bottom = -20;
+    directionalLight.shadow.mapSize.height = 2048;    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 80; // 50'den 80'e artırıldı
+    directionalLight.shadow.camera.left = -40; // -20'den -40'a artırıldı
+    directionalLight.shadow.camera.right = 40; // 20'den 40'a artırıldı
+    directionalLight.shadow.camera.top = 40; // 20'den 40'a artırıldı
+    directionalLight.shadow.camera.bottom = -40; // -20'den -40'a artırıldı
     scene.add(directionalLight);
     
     // Güneş görsel temsili - models-showcase gibi daha büyük
@@ -213,101 +211,32 @@ function setupLighting() {
     const frontLight = new THREE.DirectionalLight(0xffffff, 0.4);
     frontLight.position.set(0, 5, 15);
     scene.add(frontLight);
-    
-    // Otomatik dönen ışık parametreleri
-    window.autoRotate = true;
+      // Otomatik dönen ışık parametreleri - manuel kontrol için devre dışı
+    window.autoRotate = false;
     window.rotationSpeed = 1.0;
     window.lightRadius = 15;
     window.lightAngle = 0;
 }
 
 function createGround() {
-    // FBX modelini terrain olarak yükle
-    const fbxLoader = new FBXLoader();
-    
-    fbxLoader.load(
-        './uploads_files_3835558_untitled.fbx',
-        (object) => {
-            console.log('Terrain FBX modeli yüklendi:', object);
-            
-            // Terrain için uygun boyutlandırma ve pozisyonlama
-            object.scale.set(2, 1, 2); // Terrain'i büyüt
-            object.position.set(0, -1, 0); // Yerden biraz aşağı yerleştir
-            
-            // Tüm mesh'leri traverse et ve terrain özelliklerini ayarla
-            object.traverse((child) => {
-                if (child.isMesh) {
-                    child.receiveShadow = true;
-                    child.castShadow = false; // Terrain gölge atmaz ama alır
-                    
-                    if (child.material) {
-                        // Terrain materyalini ayarla
-                        if (Array.isArray(child.material)) {
-                            child.material.forEach(mat => {
-                                mat.side = THREE.DoubleSide;
-                                mat.roughness = 0.8;
-                                mat.metalness = 0.1;
-                                // Terrain rengi - toprak tonu
-                                if (!mat.map) {
-                                    mat.color.setHex(0x8B7355);
-                                }
-                                if (mat.map) mat.map.flipY = false;
-                            });
-                        } else {
-                            child.material.side = THREE.DoubleSide;
-                            child.material.roughness = 0.8;
-                            child.material.metalness = 0.1;
-                            // Terrain rengi - toprak tonu
-                            if (!child.material.map) {
-                                child.material.color.setHex(0x8B7355);
-                            }
-                            if (child.material.map) child.material.map.flipY = false;
-                        }
-                    }
-                }
-            });
-            
-            object.name = 'TerrainModel';
-            terrainModel = object;
-            scene.add(object);
-            console.log('FBX terrain sahneye eklendi');
-        },
-        (progress) => {
-            console.log('Terrain yükleme:', (progress.loaded / progress.total * 100) + '%');
-        },
-        (error) => {
-            console.error('Terrain FBX yüklenemedi:', error);
-            console.log('Fallback terrain oluşturuluyor...');
-            createFallbackTerrain();
-        }
-    );
-}
-
-function createFallbackTerrain() {
-    // Yedek terrain oluştur (FBX yüklenemezse)
-    const planeGeometry = new THREE.PlaneGeometry(50, 50, 32, 32);
-    
-    // Heightmap ile terrain benzeri yüzey oluştur
-    const vertices = planeGeometry.attributes.position.array;
-    for (let i = 0; i < vertices.length; i += 3) {
-        vertices[i + 2] = Math.random() * 2 - 1; // Z ekseni (yükseklik)
-    }
-    planeGeometry.attributes.position.needsUpdate = true;
-    planeGeometry.computeVertexNormals();
-    
-    const planeMaterial = new THREE.MeshStandardMaterial({
-        color: 0x8B7355,
+    // Düzlem oluştur - büyütüldü
+    const planeGeometry = new THREE.PlaneGeometry(100, 100); // 50'den 100'e çıkarıldı
+    const planeMaterial = new THREE.MeshStandardMaterial({ 
+        color: 	0xcccc99,
         roughness: 0.8,
-        metalness: 0.1,
-        wireframe: false
+        metalness: 0.1
     });
-    
     plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotation.x = -Math.PI / 2;
     plane.receiveShadow = true;
-    plane.name = 'FallbackTerrain';
     scene.add(plane);
-    console.log('Fallback terrain oluşturuldu');
+    /*
+    // Grid helper
+    const gridHelper = new THREE.GridHelper(100, 100, 0x000000, 0x000000); // 50'den 100'e çıkarıldı
+    gridHelper.material.opacity = 0.3;
+    gridHelper.material.transparent = true;
+    scene.add(gridHelper);
+    */
 }
 
 function loadModels() {
@@ -356,14 +285,12 @@ function loadModels() {
             addPlaceholderModel(-4, 0, 0, 'Statue', 0xff0000);
             onModelLoaded();
         }
-    );
-    
-   
+    );     // Sol Piramit (hareket ettirilebilir)
     fbxLoader.load(
         './Free_pyramid/fbxPyra.fbx',
         (object) => {
-            console.log('Pyramid yüklendi:', object);
-            object.position.set(4, 0, 0);
+            console.log('Sol Piramit yüklendi:', object);
+            object.position.set(-15, 0, -15); // Mesafe daha da artırıldı
             object.scale.set(0.5, 0.5, 0.5);
             
             object.traverse((child) => {
@@ -385,30 +312,27 @@ function loadModels() {
                 }
             });
             
-            object.name = 'Pyramid';
+            object.name = 'PyramidLeft';
             scene.add(object);
             models.push(object);
             onModelLoaded();
         },
         (progress) => {
-            console.log('Pyramid yükleme:', (progress.loaded / progress.total * 100) + '%');
+            console.log('Sol Piramit yükleme:', (progress.loaded / progress.total * 100) + '%');
             updateLoadingProgress(1, progress.loaded / progress.total);
-        },
-        (error) => {
-            console.error('Pyramid yüklenemedi:', error);
-            addPlaceholderModel(4, 0, 0, 'Pyramid', 0x00ff00);
+        },        (error) => {
+            console.error('Sol Piramit yüklenemedi:', error);
+            addPlaceholderModel(-15, 0, -15, 'PyramidLeft', 0x00ff00);
             onModelLoaded();
         }
-    );
-      // Animasyonlu Walking model
+    );    // Orta Piramit (gizli oda - hareket ettirilemez)
     fbxLoader.load(
-        './Hurricane_Kick.fbx',
+        './Free_pyramid/fbxPyra.fbx',
         (object) => {
-            console.log('Walking model yüklendi:', object);
-            object.position.set(0, 0, -4);
-            object.scale.set(0.05, 0.05, 0.05); // Boyutu ayarlayın
+            console.log('Orta Piramit yüklendi:', object);
+            object.position.set(0, 0, -18); // Daha da uzaklaştırıldı
+            object.scale.set(0.6, 0.6, 0.6); // Biraz daha büyük (gizli oda için önemli)
             
-            // Gölgeleri etkinleştir
             object.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
@@ -428,40 +352,61 @@ function loadModels() {
                 }
             });
             
-            // Animasyonları kontrol et
-            if (object.animations && object.animations.length > 0) {
-                console.log('Animasyonlar bulundu:', object.animations.length);
-                
-                // AnimationMixer oluştur
-                mixer = new THREE.AnimationMixer(object);
-                
-                // Yürüme animasyonunu hazırla ama başlatma
-                walkAction = mixer.clipAction(object.animations[0]);
-                walkAction.setLoop(THREE.LoopRepeat);
-                
-                // Animasyonu durdur
-                walkAction.stop();
-                
-                console.log('Animasyon hazırlandı:', object.animations[0].name);
-            } else {
-                console.log('Bu modelde animasyon bulunamadı');
-            }
+            object.name = 'PyramidMain';
+            scene.add(object);
+            // Gizli oda piramitini models dizisine eklemeyelim ki hareket ettirilemez olsun
+            onModelLoaded();
+        },
+        (progress) => {
+            console.log('Orta Piramit yükleme:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(2, progress.loaded / progress.total);
+        },        (error) => {
+            console.error('Orta Piramit yüklenemedi:', error);
+            addPlaceholderModel(0, 0, -18, 'PyramidMain', 0x00aa00);
+            onModelLoaded();
+        }
+    );    // Sağ Piramit (hareket ettirilebilir)
+    fbxLoader.load(
+        './Free_pyramid/fbxPyra.fbx',
+        (object) => {
+            console.log('Sağ Piramit yüklendi:', object);
+            object.position.set(15, 0, -15); // Mesafe daha da artırıldı
+            object.scale.set(0.5, 0.5, 0.5);
             
-            object.name = 'WalkingCharacter';
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => {
+                                mat.side = THREE.FrontSide;
+                                if (mat.map) mat.map.flipY = false;
+                            });
+                        } else {
+                            child.material.side = THREE.FrontSide;
+                            if (child.material.map) child.material.map.flipY = false;
+                        }
+                    }
+                }
+            });
+            
+            object.name = 'PyramidRight';
             scene.add(object);
             models.push(object);
             onModelLoaded();
         },
         (progress) => {
-            console.log('Walking model yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(2, progress.loaded / progress.total);
-        },
-        (error) => {
-            console.error('Walking model yüklenemedi:', error);
-            addPlaceholderModel(0, 0, -4, 'WalkingCharacter', 0x0000ff);
+            console.log('Sağ Piramit yükleme:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(3, progress.loaded / progress.total);
+        },        (error) => {
+            console.error('Sağ Piramit yüklenemedi:', error);
+            addPlaceholderModel(15, 0, -15, 'PyramidRight', 0x0000ff);
             onModelLoaded();
         }
-    );      // Walking model 2
+    );
+    
     fbxLoader.load(
         './Walking.fbx',
         (object) => {
@@ -507,16 +452,14 @@ function loadModels() {
                 console.log('Walking model 2 animasyon hazırlandı:', object.animations[0].name);
             } else {
                 console.log('Walking model 2 animasyon bulunamadı');
-            }
-            
-            object.name = 'WalkingModel';
+            }            object.name = 'WalkingModel';
             scene.add(object);
             models.push(object);
             onModelLoaded();
         },
         (progress) => {
             console.log('Walking model 2 yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(3, progress.loaded / progress.total);
+            updateLoadingProgress(4, progress.loaded / progress.total);
         },
         (error) => {
             console.error('Walking model 2 yüklenemedi:', error);
@@ -524,6 +467,7 @@ function loadModels() {
             onModelLoaded();
         }
     );
+
 }
 
 function addPlaceholderModel(x, y, z, name, color) {
@@ -546,14 +490,18 @@ function addPlaceholderModel(x, y, z, name, color) {
 }
 
 function updateLoadingProgress(modelIndex, progress) {
+    // Loading screen has been removed, but keeping this function for compatibility
     const totalProgress = ((loadedModels + progress) / totalModels) * 100;
-    document.getElementById('loadingProgress').textContent = Math.round(totalProgress) + '%';
+    console.log(`Model yükleme ilerleme: ${Math.round(totalProgress)}% (${loadedModels + progress}/${totalModels})`);
 }
 
 function onModelLoaded() {
     loadedModels++;
+    const totalProgress = (loadedModels / totalModels) * 100;
+    
+    console.log(`Model yükleme ilerleme: ${Math.round(totalProgress)}% (${loadedModels}/${totalModels})`);
+    
     if (loadedModels >= totalModels) {
-        document.getElementById('loading').style.display = 'none';
         console.log('Tüm modeller yüklendi!');
     }
 }
@@ -565,7 +513,6 @@ function setupEventListeners() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
     setupSunControls();
-    setupTerrainControls(); // Terrain kontrolleri ekle
     setupChamberLightControls();
     setupHieroglyphPanels();
     setupTombPuzzle();
@@ -626,23 +573,37 @@ function onMouseClick(event) {
     if (event.button !== 0) return;
     
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(models, true);
     
-    if (intersects.length > 0) {
-        let clickedObject = intersects[0].object;
+    // Önce PyramidMain'i kontrol et (scene'deki tüm objeleri kontrol et)
+    const allIntersects = raycaster.intersectObjects(scene.children, true);
+    
+    // PyramidMain tıklaması için ayrı kontrol
+    for (let i = 0; i < allIntersects.length; i++) {
+        let clickedObject = allIntersects[i].object;
         
-        while (clickedObject.parent && !models.includes(clickedObject)) {
+        // Objenin parent'larını kontrol et
+        while (clickedObject.parent && clickedObject.parent !== scene) {
             clickedObject = clickedObject.parent;
         }
-          // Piramide tıklanma kontrolü - Mezar bulmacasını aç (gizli oda modunda değilse)
-        if (clickedObject.name === 'Pyramid' || clickedObject.name === 'pyramid') {
-            // Gizli oda turu aktifse mezar bulmacasını gösterme
+        
+        if (clickedObject.name === 'PyramidMain') {
+            console.log('PyramidMain\'e tıklandı!');
             if (!hiddenChamberTourActive) {
                 showTombPuzzle();
             }
-            return; // Piramide tıklandığında model seçimi yapma
+            return;
         }
-          if (selectedModel) {
+    }
+    
+    // Normal model tıklama kontrolü
+    const intersects = raycaster.intersectObjects(models, true);
+    
+    if (intersects.length > 0) {        let clickedObject = intersects[0].object;
+        while (clickedObject.parent && !models.includes(clickedObject)) {
+            clickedObject = clickedObject.parent;
+        }
+        
+        if (selectedModel) {
             // Önceki model seçimi kaldırılırken animasyonu durdur
             if (selectedModel.name === 'WalkingCharacter' && walkAction) {
                 walkAction.stop();
@@ -798,8 +759,7 @@ function updateSelectedModel() {
         moveVector.multiplyScalar(currentSpeed);
         
         selectedModel.position.add(moveVector);
-        
-        const maxDistance = 23;
+          const maxDistance = 45; // 23'ten 45'e artırıldı
         selectedModel.position.x = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.x));
         selectedModel.position.z = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.z));
     }
@@ -841,77 +801,11 @@ function animate() {
 
 // Otomatik dönen ışık pozisyonu güncellemesi
 function updateLightPosition() {
-    if (window.autoRotate) {
-        window.lightAngle += 0.01 * window.rotationSpeed;
-        
-        // Directional light pozisyonunu dairesel yolda güncelle
-        directionalLight.position.x = Math.sin(window.lightAngle) * window.lightRadius;
-        directionalLight.position.z = Math.cos(window.lightAngle) * window.lightRadius;
-        
-        // Güneş görsel temsilini de güncelle
-        sun.position.copy(directionalLight.position);
-    }
+    // Otomatik dönen ışık sistemi kaldırıldı - manuel kontrol için
+    // Sadece manuel güneş kontrolleri kullanılacak
 }
 
-// Terrain Kontrol Fonksiyonları
-function setupTerrainControls() {
-    const controls = ['terrainX', 'terrainY', 'terrainZ', 'terrainScale', 'terrainRotationY'];
-    
-    controls.forEach(id => {
-        const slider = document.getElementById(id);
-        const valueInput = document.getElementById(id + 'Value');
-        
-        if (slider && valueInput) {
-            slider.addEventListener('input', () => {
-                valueInput.value = slider.value;
-                updateTerrainPosition();
-            });
-            
-            valueInput.addEventListener('input', () => {
-                slider.value = valueInput.value;
-                updateTerrainPosition();
-            });
-        }
-    });
-    
-    console.log('Terrain kontrolleri kuruldu');
-}
-
-function updateTerrainPosition() {
-    if (!terrainModel) return;
-    
-    const x = parseFloat(document.getElementById('terrainX').value);
-    const y = parseFloat(document.getElementById('terrainY').value);
-    const z = parseFloat(document.getElementById('terrainZ').value);
-    const scale = parseFloat(document.getElementById('terrainScale').value);
-    const rotationY = parseFloat(document.getElementById('terrainRotationY').value);
-    
-    terrainModel.position.set(x, y, z);
-    terrainModel.scale.set(scale, scale * 0.5, scale); // Y eksenini biraz daha düz tut
-    terrainModel.rotation.y = rotationY;
-    
-    console.log(`Terrain pozisyonu güncellendi: x=${x}, y=${y}, z=${z}, scale=${scale}, rotY=${rotationY}`);
-}
-
-function reloadTerrain() {
-    if (terrainModel) {
-        scene.remove(terrainModel);
-        terrainModel = null;
-    }
-    
-    // Fallback terrain varsa kaldır
-    if (plane) {
-        scene.remove(plane);
-        plane = null;
-    }
-    
-    console.log('Terrain yeniden yükleniyor...');
-    createGround();
-}
-
-// Global fonksiyonları window objesine ekle
-window.reloadTerrain = reloadTerrain;
-
+// Hiyeroglif panelleri için event listener'ları ayarla
 function setupHieroglyphPanels() {
     const panels = document.querySelectorAll('.hieroglyph-panel');
     panels.forEach(panel => {
@@ -1680,11 +1574,13 @@ function startHiddenChamberTour() {
     
     // Orijinal sahne verilerini kaydet
     originalCameraPosition.copy(camera.position);
-    originalCameraTarget.copy(controls.target);
-      // Ana sahne objelerini gizle
+    originalCameraTarget.copy(controls.target);    // Ana sahne objelerini gizle
     models.forEach(model => {
         if (model) model.visible = false;
     });
+    // PyramidMain özel olarak kontrol edilmeli çünkü models dizisinde değil
+    const pyramidMain = scene.getObjectByName('PyramidMain');
+    if (pyramidMain) pyramidMain.visible = false;
     plane.visible = false;
     sun.visible = false;
       // Gizli oda sahnesini göster
@@ -1813,11 +1709,13 @@ function stopHiddenChamberTour() {
     
     // Overlay'i gizle
     const overlay = document.getElementById('tombTourOverlay');
-    overlay.classList.remove('tomb-tour-active');
-      // Ana sahne objelerini geri göster
+    overlay.classList.remove('tomb-tour-active');    // Ana sahne objelerini geri göster
     models.forEach(model => {
         if (model) model.visible = true;
     });
+    // PyramidMain özel olarak kontrol edilmeli çünkü models dizisinde değil
+    const pyramidMain = scene.getObjectByName('PyramidMain');
+    if (pyramidMain) pyramidMain.visible = true;
     plane.visible = true;
     sun.visible = true;
       // Gizli oda sahnesini gizle
