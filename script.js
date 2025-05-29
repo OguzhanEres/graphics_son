@@ -6,6 +6,7 @@ import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader.js';
 // Global değişkenler
 let scene, camera, renderer, controls;
 let plane, sun, directionalLight, ambientLight;
+let desertTerrain; // Desert terrain modeli
 let selectedModel = null;
 const models = [];
 const raycaster = new THREE.Raycaster();
@@ -14,7 +15,7 @@ const keys = { w: false, a: false, s: false, d: false };
 const moveSpeed = 0.15; // Diğer modeller için
 const walkingCharacterSpeed = 0.05; // Walking karakteri için yavaş hız
 let loadedModels = 0;
-const totalModels = 8; // 8 model olacak (3 piramit + statue + walking model + deve + kosma + sabit)
+const totalModels = 9; // 9 model olacak (3 piramit + statue + deve + kosma + sabit + desert terrain)
 
 // Animasyon için yeni değişkenler
 let mixer; // Hurricane_Kick için animasyon mixer'ı
@@ -146,10 +147,9 @@ function init() {
     // Sahne oluştur
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87CEEB);
-    
-    // Kamera oluştur
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(8, 8, 8);
+      // Kamera oluştur - Desert terrain için optimize edildi
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000); // Far plane artırıldı
+    camera.position.set(15, 15, 15); // Daha yüksek başlangıç pozisyonu
     
     // Renderer oluştur
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -159,12 +159,12 @@ function init() {
     renderer.setClearColor(0x87CEEB);
     document.getElementById('container').appendChild(renderer.domElement);
     
-    // OrbitControls
+    // OrbitControls - Desert terrain için genişletildi
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.minDistance = 2;
-    controls.maxDistance = 100;
+    controls.minDistance = 5; // Minimum mesafe artırıldı
+    controls.maxDistance = 200; // Maksimum mesafe büyük ölçüde artırıldı
     controls.maxPolarAngle = Math.PI / 2.1;
     
     // Işıklar
@@ -199,11 +199,11 @@ function setupLighting() {
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 80; // 50'den 80'e artırıldı
-    directionalLight.shadow.camera.left = -40; // -20'den -40'a artırıldı
-    directionalLight.shadow.camera.right = 40; // 20'den 40'a artırıldı
-    directionalLight.shadow.camera.top = 40; // 20'den 40'a artırıldı
-    directionalLight.shadow.camera.bottom = -40; // -20'den -40'a artırıldı
+    directionalLight.shadow.camera.far = 120; // 80'den 120'ye artırıldı (büyük terrain için)
+    directionalLight.shadow.camera.left = -80; // -40'dan -80'e artırıldı
+    directionalLight.shadow.camera.right = 80; // 40'dan 80'e artırıldı
+    directionalLight.shadow.camera.top = 80; // 40'dan 80'e artırıldı
+    directionalLight.shadow.camera.bottom = -80; // -40'dan -80'e artırıldı
     scene.add(directionalLight);
     
     // Güneş görsel temsili - models-showcase gibi daha büyük
@@ -231,20 +231,23 @@ function setupLighting() {
 }
 
 function createGround() {
-    // Düzlem oluştur - büyütüldü
-    const planeGeometry = new THREE.PlaneGeometry(100, 100); // 50'den 100'e çıkarıldı
+    // Küçük düzlem oluştur - artık desert terrain ana zemin olacak
+    const planeGeometry = new THREE.PlaneGeometry(50, 50); // 100'den 50'ye küçültüldü
     const planeMaterial = new THREE.MeshStandardMaterial({ 
-        color: 	0xcccc99,
+        color: 0xcccc99,
         roughness: 0.8,
-        metalness: 0.1
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.3 // Desert terrain görünürken daha şeffaf
     });
     plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotation.x = -Math.PI / 2;
+    plane.position.y = -2; // Desert terrain'in biraz üstünde
     plane.receiveShadow = true;
     scene.add(plane);
     /*
     // Grid helper
-    const gridHelper = new THREE.GridHelper(100, 100, 0x000000, 0x000000); // 50'den 100'e çıkarıldı
+    const gridHelper = new THREE.GridHelper(50, 50, 0x000000, 0x000000); // 100'den 50'ye küçültüldü
     gridHelper.material.opacity = 0.3;
     gridHelper.material.transparent = true;
     scene.add(gridHelper);
@@ -260,7 +263,7 @@ function loadModels() {
         './Statue_egypt1/fbxStatue.fbx',
         (object) => {
             console.log('Statue yüklendi:', object);
-            object.position.set(-4, 0, 0);
+            object.position.set(-4, -1.9, 0); // Adjusted Y position
             object.scale.set(0.5, 0.5, 0.5);
             
             // Gölgeleri etkinleştir
@@ -294,7 +297,7 @@ function loadModels() {
         },
         (error) => {
             console.error('Statue yüklenemedi:', error);
-            addPlaceholderModel(-4, 0, 0, 'Statue', 0xff0000);
+            addPlaceholderModel(-4, -1.9, 0, 'Statue', 0xff0000); // Adjusted Y position
             onModelLoaded();
         }
     );     // Sol Piramit (hareket ettirilebilir)
@@ -302,7 +305,7 @@ function loadModels() {
         './Free_pyramid/fbxPyra.fbx',
         (object) => {
             console.log('Sol Piramit yüklendi:', object);
-            object.position.set(-15, 0, -15); // Mesafe daha da artırıldı
+            object.position.set(-15, -1.9, -15); // Adjusted Y position
             object.scale.set(0.5, 0.5, 0.5);
             
             object.traverse((child) => {
@@ -334,7 +337,7 @@ function loadModels() {
             updateLoadingProgress(1, progress.loaded / progress.total);
         },        (error) => {
             console.error('Sol Piramit yüklenemedi:', error);
-            addPlaceholderModel(-15, 0, -15, 'PyramidLeft', 0x00ff00);
+            addPlaceholderModel(-15, -1.9, -15, 'PyramidLeft', 0x00ff00); // Adjusted Y position
             onModelLoaded();
         }
     );    // Orta Piramit (gizli oda - hareket ettirilemez)
@@ -342,8 +345,8 @@ function loadModels() {
         './Free_pyramid/fbxPyra.fbx',
         (object) => {
             console.log('Orta Piramit yüklendi:', object);
-            object.position.set(0, 0, -18); // Daha da uzaklaştırıldı
-            object.scale.set(0.6, 0.6, 0.6); // Biraz daha büyük (gizli oda için önemli)
+            object.position.set(0, -1.9, -18); // Adjusted Y position
+            object.scale.set(0.6, 0.6, 0.6); // Biraz daha büyük (gizli oda için)
             
             object.traverse((child) => {
                 if (child.isMesh) {
@@ -374,7 +377,7 @@ function loadModels() {
             updateLoadingProgress(2, progress.loaded / progress.total);
         },        (error) => {
             console.error('Orta Piramit yüklenemedi:', error);
-            addPlaceholderModel(0, 0, -18, 'PyramidMain', 0x00aa00);
+            addPlaceholderModel(0, -1.9, -18, 'PyramidMain', 0x00aa00); // Adjusted Y position
             onModelLoaded();
         }
     );    // Sağ Piramit (hareket ettirilebilir)
@@ -382,7 +385,7 @@ function loadModels() {
         './Free_pyramid/fbxPyra.fbx',
         (object) => {
             console.log('Sağ Piramit yüklendi:', object);
-            object.position.set(15, 0, -15); // Mesafe daha da artırıldı
+            object.position.set(15, -1.9, -15); // Adjusted Y position
             object.scale.set(0.5, 0.5, 0.5);
             
             object.traverse((child) => {
@@ -414,7 +417,7 @@ function loadModels() {
             updateLoadingProgress(3, progress.loaded / progress.total);
         },        (error) => {
             console.error('Sağ Piramit yüklenemedi:', error);
-            addPlaceholderModel(15, 0, -15, 'PyramidRight', 0x0000ff);
+            addPlaceholderModel(15, -1.9, -15, 'PyramidRight', 0x0000ff); // Adjusted Y position
             onModelLoaded();
         }
     );
@@ -454,7 +457,7 @@ function loadModels() {
         './sabit.fbx',
         (object) => {
             console.log('Sabit modeli yüklendi:', object);
-            object.position.set(8, 0, 8);
+            object.position.set(8, -1.9, 8); // Adjusted Y position
             object.scale.set(0.03, 0.03, 0.03);
             
             // Gölgeleri etkinleştir
@@ -513,7 +516,7 @@ function loadModels() {
                 console.log('Kosma animasyonunu sabit modeline bağlıyorum...');
                   // Kosma animasyonu için tüm pozisyon track'lerini çıkar - sadece rotation ve scale kullan
                 const filteredTracks = window.kosmaAnimation.tracks.filter(track => {
-                    // Tüm pozisyon track'lerini çıkar, sadece rotation ve scale tut
+                    // Tüm pozisyon track'lerini çıkar, sadece rotation tut
                     return !track.name.includes('.position');
                 });
                 
@@ -580,26 +583,117 @@ function loadModels() {
         (progress) => {
             console.log('Sabit model yükleme:', (progress.loaded / progress.total * 100) + '%');
             updateLoadingProgress(6, progress.loaded / progress.total);
+        },        (error) => {
+            console.error('Sabit model yüklenemedi:', error);
+            addPlaceholderModel(8, -1.9, 8, 'CharacterModel', 0x00FFFF); // Adjusted Y position
+            onModelLoaded();
+        }
+    );
+
+    // Desert Terrain Model - Büyük çöl arazisi
+    fbxLoader.load(
+        './desert_terrain.fbx',
+        (object) => {
+            console.log('Desert Terrain yüklendi:', object);
+            object.position.set(0, -30, 0); // Corrected Y position from -20 to -2
+            object.scale.set(3, 1, 3);
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = false;
+                    child.receiveShadow = true;
+                    
+                    if (child.material) {
+                        const materials = Array.isArray(child.material) ? child.material : [child.material];
+                        materials.forEach(mat => {
+                            mat.side = THREE.FrontSide;
+                            if (mat.map) mat.map.flipY = false;
+                            mat.color.setHex(0xD2B48C); 
+                            mat.roughness = 0.9;
+                            mat.metalness = 0.0;
+                            if (mat.emissive) {
+                                mat.emissive.setHex(0x0A0704);
+                            }
+                        });
+                    }
+
+                    // Make terrain rugged
+                    if (child.geometry) {
+                        const vertices = child.geometry.attributes.position.array;
+                        for (let i = 0; i < vertices.length; i += 3) {
+                            // Affect Y coordinate (vertices[i+1])
+                            // Add a small random value, scaled by the terrain's overall scale
+                            const randomOffset = (Math.random() - 0.5) * 0.25; // Adjust multiplier for more/less ruggedness
+                            vertices[i+1] += randomOffset;
+                        }
+                        child.geometry.attributes.position.needsUpdate = true;
+                        child.geometry.computeVertexNormals(); // Important for lighting after vertex modification
+                    }
+                }
+            });
+            
+            object.name = 'DesertTerrain';
+            desertTerrain = object;
+            scene.add(object);
+            // Terrain'i models dizisine ekleme - hareket ettirilemez olsun
+            onModelLoaded();
+        },        (progress) => {
+            console.log('Desert Terrain yükleme:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(8, progress.loaded / progress.total); // Index 8 (son model)
         },
         (error) => {
-            console.error('Sabit model yüklenemedi:', error);
-            addPlaceholderModel(8, 0, 8, 'CharacterModel', 0x00FFFF);
+            console.error('Desert Terrain yüklenemedi:', error);
+            // Hata durumunda basit bir düzlem oluştur
+            createFallbackTerrain();
             onModelLoaded();
         }
     );
 }
 
+function createFallbackTerrain() {
+    console.log('Creating fallback desert terrain...');
+    const terrainGeometry = new THREE.PlaneGeometry(200, 200, 50, 50); // Increased segments for more detail
+    
+    const terrainMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xC4A76A,
+        roughness: 0.9,
+        metalness: 0.0,
+        flatShading: false // Use smooth shading for a more natural look
+    });
+    
+    const vertices = terrainGeometry.attributes.position.array;
+    for (let i = 0; i < vertices.length; i += 3) {
+        // vertices[i+2] is the Z coordinate in PlaneGeometry, which becomes Y after rotation
+        const randomOffset = (Math.random() - 0.5) * 0.8; // Increased ruggedness for fallback
+        vertices[i+2] += randomOffset; 
+    }
+    terrainGeometry.attributes.position.needsUpdate = true;
+    terrainGeometry.computeVertexNormals();
+    
+    desertTerrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
+    desertTerrain.rotation.x = -Math.PI / 2;
+    desertTerrain.position.y = -2;
+    desertTerrain.receiveShadow = true;
+    desertTerrain.name = 'DesertTerrain';
+    scene.add(desertTerrain);
+    
+    console.log('Fallback desert terrain created');
+}
+
 function addPlaceholderModel(x, y, z, name, color) {
     let geometry;
-    if (name === 'Pyramid') {
-        geometry = new THREE.ConeGeometry(1, 2, 4);
+    if (name.includes('Pyramid')) { 
+        geometry = new THREE.BoxGeometry(2, 2, 2); 
+    } else if (name === 'Statue') {
+        geometry = new THREE.BoxGeometry(1, 2, 1); 
+    } else if (name === 'CharacterModel') {
+        geometry = new THREE.CapsuleGeometry(0.5, 1, 4, 8); 
     } else {
-        geometry = new THREE.BoxGeometry(1, 2, 1);
+        geometry = new THREE.SphereGeometry(1, 16, 16); 
     }
     
     const material = new THREE.MeshStandardMaterial({ color: color });
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y + 1, z);
+    mesh.position.set(x, -1.9, z); // Adjusted Y position, ignoring passed 'y'
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.name = name;
@@ -848,7 +942,7 @@ function updateCharacterStatus() {
     }
 }
 
-function updateSelectedModel() {
+function updateSelectedModel(passedDelta) { // Accept passedDelta
     if (!selectedModel) return;
     
     const cameraDirection = new THREE.Vector3();
@@ -870,7 +964,7 @@ function updateSelectedModel() {
     // Seçili model CharacterModel ise her zaman animasyonu kontrol et (sadece hareket değişiminde değil)
     if (selectedModel.name === 'CharacterModel' && characterModel) {
         // Her frame'de çağır, sadece değişim anında değil
-        updateCharacterAnimations();
+        updateCharacterAnimations(passedDelta); // Pass passedDelta
     }
       
     // Seçili model WalkingCharacter ise animasyon kontrolü yap
@@ -905,10 +999,7 @@ function updateSelectedModel() {
         }
     }
       // CharacterModel (kosma/sabit) için animasyon kontrolü
-    if (selectedModel.name === 'CharacterModel' && characterModel) {
-        updateCharacterAnimations();
-    }
-      if (keys.w || keys.s || keys.a || keys.d) {
+    if (keys.w || keys.s || keys.a || keys.d) {
         moveVector.y = 0;
         moveVector.normalize();
         
@@ -921,60 +1012,46 @@ function updateSelectedModel() {
         }
         
         moveVector.multiplyScalar(currentSpeed);
-        
-        selectedModel.position.add(moveVector);
-        const maxDistance = 45;
+          selectedModel.position.add(moveVector);
+        const maxDistance = 90; // Desert terrain için genişletildi (45'ten 90'a)
         selectedModel.position.x = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.x));
         selectedModel.position.z = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.z));
     }
 }
 
 // Karakter animasyonlarını güncelle (kosma/sabit arasında geçiş)
-function updateCharacterAnimations() {
+function updateCharacterAnimations(passedDelta) { // Accept passedDelta
     if (!kosmaAction || !sabitAction || !characterModel) return;
-    
-    // Her frame'de hareket durumunu kontrol et (tuşlar basılıyor mu?)
+
     const currentlyMoving = keys.w || keys.s || keys.a || keys.d;
     const currentTime = Date.now();
-    
-    // Karakteri hareket yönüne doğru döndür - her frame'de çalışmalı
-    if (currentlyMoving && characterModel) {
+
+    // Karakteri hareket yönüne doğru döndür
+    if (currentlyMoving) {
         const moveDirection = new THREE.Vector3();
-        
-        // Kamera yönünü al
         const cameraDirection = new THREE.Vector3();
         camera.getWorldDirection(cameraDirection);
         const cameraRight = new THREE.Vector3();
         cameraRight.crossVectors(camera.up, cameraDirection).normalize();
-        
-        // Hareket vektörünü hesapla
+
         if (keys.w) moveDirection.add(cameraDirection.clone().multiplyScalar(-1));
         if (keys.s) moveDirection.add(cameraDirection);
         if (keys.a) moveDirection.add(cameraRight.clone().multiplyScalar(-1));
         if (keys.d) moveDirection.add(cameraRight);
-        
-        if (moveDirection.length() > 0) {
+
+        if (moveDirection.lengthSq() > 0) { // lengthSq for performance
             moveDirection.y = 0;
-            moveDirection.normalize();            // Karakterin yönünü hesapla - A tuşu için doğru sol dönüş
-            // Three.js'de Y ekseni yukarı, Z ekseni kameraya doğru
-            // atan2(-x, -z) kullanarak karakterin hareket yönüne dönmesini sağla
-            const targetRotation = Math.atan2(-moveDirection.x, -moveDirection.z);
+            moveDirection.normalize();
+
+            const targetRotation = Math.atan2(moveDirection.x, moveDirection.z); // Changed from (-moveDirection.x, -moveDirection.z)
             
-            // Smooth karakter dönüşü - 24 frame animasyon için delta time optimized
-            const delta = clock.getDelta();
-            const clampedDelta = Math.min(delta, 1/24); // 24fps için delta clamping
-            const rotationSpeed = 0.15 * (clampedDelta * 24); // Frame rate normalized rotation
-            
-            characterModel.rotation.y = THREE.MathUtils.lerp(
-                characterModel.rotation.y,
-                targetRotation,
-                rotationSpeed
-            );
+            // Smooth rotation
+            const rotationSpeed = 10 * passedDelta; 
+            characterModel.rotation.y = THREE.MathUtils.lerp(characterModel.rotation.y, targetRotation, rotationSpeed);
         }
     }
-    
-    // Tuş durumlarını direkt kontrol et (delay'i azalt)
-    const minSwitchDelay = 30; // Daha hızlı yanıt vermesi için delay'i azalttık
+
+    const minSwitchDelay = 30; 
     if (currentTime - lastAnimationSwitch < minSwitchDelay) {
         // Burada delay olsa bile, animasyon ağırlıklarını güncelleyelim
         if (currentlyMoving && kosmaAction) {
@@ -987,55 +1064,31 @@ function updateCharacterAnimations() {
         }
         return;
     }
-    
-    // Hareket durumu değişti mi kontrol et (değişmediyse bile animasyon güncellenir)
+
     if (currentlyMoving !== isMoving) {
         isMoving = currentlyMoving;
-        lastAnimationSwitch = currentTime;        if (isMoving) {            // Hareket başladığında: kosma animasyonuna geç - 24 frame smooth transition
-            if (kosmaAction && sabitAction) {                // Kosma animasyonunu başlat - 24 frame için optimize edildi
-                // Tam konfigürasyon yapılandırması
-                kosmaAction.setLoop(THREE.LoopRepeat, Infinity);
-                kosmaAction.clampWhenFinished = false;
-                kosmaAction.zeroSlopeAtStart = false;
-                kosmaAction.zeroSlopeAtEnd = false;
-                kosmaAction.enabled = true;
-                
-                // 24 frame animasyon için playback hızını optimize et - stuttering önleme
-                kosmaAction.timeScale = 1.0; // Consistent 24fps playback
-                kosmaAction.setEffectiveTimeScale(1.0);
-                
-                // Önemli: Animasyonu her zaman yeniden başlat ve tam ağırlık ver
+        lastAnimationSwitch = currentTime;
+
+        if (isMoving) {
+            if (kosmaAction && sabitAction) {
                 kosmaAction.reset();
+                kosmaAction.setEffectiveWeight(1.0);
                 kosmaAction.paused = false;
                 kosmaAction.play();
-                kosmaAction.setEffectiveWeight(1.0);
                 
-                // Sabit animasyonunu devre dışı bırak
                 sabitAction.setEffectiveWeight(0.0);
                 sabitAction.paused = true;
-                
                 console.log('Kosma animasyonuna geçiş yapılıyor (24fps optimized)...');
-            }        } else {            // Hareket durduğunda: sabit animasyonuna geç - 24 frame smooth transition
-            if (kosmaAction && sabitAction) {                // Sabit animasyonunu başlat - 24 frame geçiş için optimize edildi
-                // Tam konfigürasyon yapılandırması
-                sabitAction.setLoop(THREE.LoopRepeat, Infinity);
-                sabitAction.clampWhenFinished = false;
-                sabitAction.zeroSlopeAtStart = false;
-                sabitAction.zeroSlopeAtEnd = false;
-                sabitAction.enabled = true;
-                sabitAction.timeScale = 1.0; // Consistent 24fps idle animation
-                sabitAction.setEffectiveTimeScale(1.0);
-                
-                // Sabit animasyonunu aktifleştir
+            }
+        } else {
+            if (kosmaAction && sabitAction) {
                 sabitAction.reset();
+                sabitAction.setEffectiveWeight(1.0);
                 sabitAction.paused = false;
                 sabitAction.play();
-                sabitAction.setEffectiveWeight(1.0);
-                
-                // Kosma animasyonunu devre dışı bırak
+
                 kosmaAction.setEffectiveWeight(0.0);
                 kosmaAction.paused = true;
-                
                 console.log('Sabit animasyonuna geçiş yapılıyor (24fps optimized)...');
             }
         }
@@ -1048,7 +1101,7 @@ function animate() {
     const delta = clock.getDelta();
     
     // Delta time clamping - 24fps için frame rate stabilizasyonu
-    const maxDelta = 1 / 24; // 24 FPS için maksimum delta
+    const maxDelta = 1 / 20; // Max delta (e.g., clamp to 20 FPS if tab is in background)
     const clampedDelta = Math.min(delta, maxDelta);
     
     // Frame rate interpolation - smooth 24-frame playback için
@@ -1060,7 +1113,7 @@ function animate() {
     if (sabitMixer) {
         // Kosma ve sabit animasyonlar için özel delta kullan - stuttering önleme
         // Sabit değer kullanarak frame rate'i sabit tut (24fps için)
-        sabitMixer.update(1/24);
+        sabitMixer.update(1/24); // Using fixed step for animation playback
         
         // Otomatik koşma/sabit animasyon kontrolü
         if (characterModel) {
@@ -1071,7 +1124,7 @@ function animate() {
                 lastAnimationSwitch = Date.now();
                 
                 if (isMoving && kosmaAction) {
-                    // Hareket başladığında koşma animasyonunu hemen başlat
+                    // Hareket başladığında koşma animasyonını hemen başlat
                     kosmaAction.reset();
                     kosmaAction.setEffectiveWeight(1.0);
                     kosmaAction.paused = false;
@@ -1123,7 +1176,7 @@ function animate() {
         }
     }
       controls.update();
-    updateSelectedModel();
+    updateSelectedModel(delta); // Pass delta
     renderer.render(scene, camera);
 }
 
@@ -1651,6 +1704,7 @@ function createTreasureChests() {
     
     const chestPositions = [
         { x: -3, z: -3, rotation: 0.2 },
+
         { x: 3, z: -3, rotation: -0.2 },
         { x: -2.5, z: 2, rotation: 0.1 },
         { x: 2.5, z: 2, rotation: -0.1 }
@@ -1686,8 +1740,9 @@ function createTreasureChests() {
         const goldGeometry = new THREE.SphereGeometry(0.1, 8, 8);
         const goldMaterial = new THREE.MeshPhongMaterial({
             color: 0xFFD700,
-            emissive: 0x222200,
-            shininess: 100
+            emissive: 0xFFD700,
+            transparent: true,
+            opacity: 0.8
         });
         
         for (let i = 0; i < 5; i++) {
@@ -1905,11 +1960,11 @@ function startHiddenChamberTour() {
     originalCameraTarget.copy(controls.target);    // Ana sahne objelerini gizle
     models.forEach(model => {
         if (model) model.visible = false;
-    });
-    // PyramidMain özel olarak kontrol edilmeli çünkü models dizisinde değil
+    });    // PyramidMain özel olarak kontrol edilmeli çünkü models dizisinde değil
     const pyramidMain = scene.getObjectByName('PyramidMain');
     if (pyramidMain) pyramidMain.visible = false;
     plane.visible = false;
+    if (desertTerrain) desertTerrain.visible = false; // Desert terrain'i de gizle
     sun.visible = false;
       // Gizli oda sahnesini göster
     hiddenChamberScene.visible = true;
@@ -2041,11 +2096,11 @@ function stopHiddenChamberTour() {
     overlay.classList.remove('tomb-tour-active');    // Ana sahne objelerini geri göster
     models.forEach(model => {
         if (model) model.visible = true;
-    });
-    // PyramidMain özel olarak kontrol edilmeli çünkü models dizisinde değil
+    });    // PyramidMain özel olarak kontrol edilmeli çünkü models dizisinde değil
     const pyramidMain = scene.getObjectByName('PyramidMain');
     if (pyramidMain) pyramidMain.visible = true;
     plane.visible = true;
+    if (desertTerrain) desertTerrain.visible = true; // Desert terrain'i de göster
     sun.visible = true;
       // Gizli oda sahnesini gizle
     if (hiddenChamberScene) hiddenChamberScene.visible = false;
