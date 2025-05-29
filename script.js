@@ -17,7 +17,6 @@ let loadedModels = 0;
 const totalModels = 4; // 4 model olacak (deve dahil)
 
 // Animasyon için yeni değişkenler
-<<<<<<< HEAD
 let mixer; // Hurricane_Kick için animasyon mixer'ı
 let walkAction; // Hurricane_Kick yürüme animasyonu
 let idleAction; // Durma animasyonu (varsa)
@@ -26,11 +25,6 @@ let idleAction; // Durma animasyonu (varsa)
 let walkingMixer; // Walking.fbx için animasyon mixer'ı
 let walkingAction; // Walking.fbx yürüme animasyonu
 
-=======
-let mixer; // Animasyon mixer'ı
-let walkAction; // Yürüme animasyonu
-let idleAction; // Durma animasyonu (varsa)
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
 const clock = new THREE.Clock(); // Zaman takibi için
 
 // Deve gezintisi için değişkenler
@@ -49,7 +43,6 @@ let tombTourActive = false;
 let tombTourStartTime = 0;
 let tombTourDuration = 12000; // 12 saniye
 
-<<<<<<< HEAD
 // Gizli Oda Turu için yeni değişkenler
 let hiddenChamberTourActive = false;
 let hiddenChamberStartTime = 0;
@@ -85,8 +78,6 @@ const chamberData = {
     }
 };
 
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
 // Hiyeroglif verileri
 const hieroglyphData = {
     panel1: {
@@ -181,7 +172,6 @@ function init() {
 }
 
 function setupLighting() {
-<<<<<<< HEAD
     // Ambient light - models-showcase gibi daha parlak
     ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
@@ -194,44 +184,25 @@ function setupLighting() {
     // Ana kontrol edilebilir directional light (güneş)
     directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
     directionalLight.position.set(5, 10, 5);
-=======
-    // Ambient light
-    ambientLight = new THREE.AmbientLight(0x404040, 0.4);
-    scene.add(ambientLight);
-    
-    // Directional light (güneş)
-    directionalLight = new THREE.DirectionalLight(0xFFFFAA, 1.5);
-    directionalLight.position.set(10, 25, 10);
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
     directionalLight.shadow.camera.near = 0.5;
-<<<<<<< HEAD
     directionalLight.shadow.camera.far = 50;
-=======
-    directionalLight.shadow.camera.far = 100;
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     directionalLight.shadow.camera.left = -20;
     directionalLight.shadow.camera.right = 20;
     directionalLight.shadow.camera.top = 20;
     directionalLight.shadow.camera.bottom = -20;
     scene.add(directionalLight);
     
-<<<<<<< HEAD
     // Güneş görsel temsili - models-showcase gibi daha büyük
     const sunGeometry = new THREE.SphereGeometry(1, 16, 16);
-=======
-    // Güneş görsel temsili
-    const sunGeometry = new THREE.SphereGeometry(0.5, 16, 16);
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     const sunMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xFFFF00
     });
     sun = new THREE.Mesh(sunGeometry, sunMaterial);
     sun.position.copy(directionalLight.position);
     scene.add(sun);
-<<<<<<< HEAD
     
     // Directional light helper - görselleştirme için
     //const dirLightHelper = new THREE.DirectionalLightHelper(directionalLight, 2);
@@ -268,81 +239,6 @@ function createGround() {
     gridHelper.material.transparent = true;
     scene.add(gridHelper);
     */
-=======
-}
-
-function createGround() {
-    // Load FBX terrain instead of creating a simple plane
-    const fbxLoader = new FBXLoader();
-      fbxLoader.load(
-        './uploads_files_3835558_untitled.fbx',
-        (terrainObject) => {
-            console.log('FBX Terrain loaded:', terrainObject);
-            
-            // Configure terrain properties
-            terrainObject.position.set(0, 0, 0);
-            terrainObject.receiveShadow = true;
-            
-            // Auto-scale terrain based on its size (optional adjustment)
-            const box = new THREE.Box3().setFromObject(terrainObject);
-            const size = box.getSize(new THREE.Vector3());
-            console.log('Terrain size:', size);
-            
-            // If terrain is too small or too large, adjust scale
-            const targetSize = 50; // Target terrain size
-            const maxDimension = Math.max(size.x, size.z);
-            if (maxDimension > 0) {
-                const scale = targetSize / maxDimension;
-                // Only scale if significantly different (avoid unnecessary scaling)
-                if (scale < 0.5 || scale > 2.0) {
-                    terrainObject.scale.set(scale, scale, scale);
-                    console.log('Terrain scaled by factor:', scale);
-                }
-            }
-            
-            // Apply desert-like material to the terrain
-            terrainObject.traverse((child) => {
-                if (child.isMesh) {
-                    child.receiveShadow = true;
-                    child.castShadow = false; // Terrain typically doesn't cast shadows
-                    
-                    // Apply desert material
-                    const desertMaterial = new THREE.MeshStandardMaterial({
-                        color: 0xcccc99, // Sandy desert color
-                        roughness: 0.8,
-                        metalness: 0.1
-                    });
-                    child.material = desertMaterial;
-                }
-            });
-            
-            // Store reference for global access
-            plane = terrainObject;
-            scene.add(terrainObject);
-            
-            console.log('FBX terrain added to scene successfully');
-        },
-        (progress) => {
-            console.log('Terrain loading progress:', (progress.loaded / progress.total * 100) + '%');
-        },
-        (error) => {
-            console.error('Error loading FBX terrain:', error);
-            console.log('Falling back to default plane terrain...');
-            
-            // Fallback to original plane if FBX fails to load
-            const planeGeometry = new THREE.PlaneGeometry(50, 50);
-            const planeMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0xcccc99,
-                roughness: 0.8,
-                metalness: 0.1
-            });
-            plane = new THREE.Mesh(planeGeometry, planeMaterial);
-            plane.rotation.x = -Math.PI / 2;
-            plane.receiveShadow = true;
-            scene.add(plane);
-        }
-    );
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
 }
 
 function loadModels() {
@@ -496,21 +392,11 @@ function loadModels() {
             addPlaceholderModel(0, 0, -4, 'WalkingCharacter', 0x0000ff);
             onModelLoaded();
         }
-<<<<<<< HEAD
     );      // Walking model 2
     fbxLoader.load(
         './Walking.fbx',
         (object) => {
             console.log('Walking model 2 yüklendi:', object);
-=======
-    );
-    
-    // Deve model (Walking.fbx'i deve olarak kullan)
-    fbxLoader.load(
-        './Walking.fbx',
-        (object) => {
-            console.log('Deve modeli yüklendi:', object);
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
             object.position.set(-8, 0, 8);
             object.scale.set(0.03, 0.03, 0.03);
             object.rotation.y = Math.PI / 4; // 45 derece döndür
@@ -526,25 +412,15 @@ function loadModels() {
                             child.material.forEach(mat => {
                                 mat.side = THREE.FrontSide;
                                 if (mat.map) mat.map.flipY = false;
-<<<<<<< HEAD
-=======
-                                // Deve rengini kahverengi yap
-                                mat.color = new THREE.Color(0x8B4513);
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
                             });
                         } else {
                             child.material.side = THREE.FrontSide;
                             if (child.material.map) child.material.map.flipY = false;
-<<<<<<< HEAD
-=======
-                            child.material.color = new THREE.Color(0x8B4513);
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
                         }
                     }
                 }
             });
             
-<<<<<<< HEAD
             // Animasyonları kontrol et
             if (object.animations && object.animations.length > 0) {
                 console.log('Walking model 2 animasyonları bulundu:', object.animations.length);
@@ -565,29 +441,17 @@ function loadModels() {
             }
             
             object.name = 'WalkingModel';
-=======
-            object.name = 'Camel';
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
             scene.add(object);
             models.push(object);
             onModelLoaded();
         },
         (progress) => {
-<<<<<<< HEAD
             console.log('Walking model 2 yükleme:', (progress.loaded / progress.total * 100) + '%');
             updateLoadingProgress(3, progress.loaded / progress.total);
         },
         (error) => {
             console.error('Walking model 2 yüklenemedi:', error);
             addPlaceholderModel(-8, 0, 8, 'WalkingModel', 0xFFAA00);
-=======
-            console.log('Deve modeli yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(3, progress.loaded / progress.total);
-        },
-        (error) => {
-            console.error('Deve modeli yüklenemedi:', error);
-            addPlaceholderModel(-8, 0, 8, 'Camel', 0xFFAA00);
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
             onModelLoaded();
         }
     );
@@ -632,15 +496,11 @@ function setupEventListeners() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
     setupSunControls();
-<<<<<<< HEAD
     setupChamberLightControls();
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     setupHieroglyphPanels();
     setupTombPuzzle();
 }
 
-<<<<<<< HEAD
 // Mezar bulmaca sistem kurulumu
 function setupTombPuzzle() {
     // Mezar bulmacası etkileşimini ayarla
@@ -649,8 +509,6 @@ function setupTombPuzzle() {
     console.log('Mezar bulmaca sistemi kuruldu');
 }
 
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
 function setupSunControls() {
     const controls = ['sunX', 'sunY', 'sunZ', 'lightIntensity'];
     
@@ -706,7 +564,6 @@ function onMouseClick(event) {
         while (clickedObject.parent && !models.includes(clickedObject)) {
             clickedObject = clickedObject.parent;
         }
-<<<<<<< HEAD
           // Piramide tıklanma kontrolü - Mezar bulmacasını aç (gizli oda modunda değilse)
         if (clickedObject.name === 'Pyramid' || clickedObject.name === 'pyramid') {
             // Gizli oda turu aktifse mezar bulmacasını gösterme
@@ -716,35 +573,13 @@ function onMouseClick(event) {
             return; // Piramide tıklandığında model seçimi yapma
         }
           if (selectedModel) {
-=======
-          // Deve tıklandığında gezintiyi başlat
-        if (clickedObject.name === 'Camel') {
-            if (!camelTourActive) {
-                startCamelTour();
-            }
-            return;
-        }
-        
-        // Piramit tıklandığında mezar bulmacasını aç
-        if (clickedObject.name === 'Pyramid') {
-            if (!tombPuzzleActive) {
-                showTombPuzzle();
-            }
-            return;
-        }
-        
-        if (selectedModel) {
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
             // Önceki model seçimi kaldırılırken animasyonu durdur
             if (selectedModel.name === 'WalkingCharacter' && walkAction) {
                 walkAction.stop();
             }
-<<<<<<< HEAD
             if (selectedModel.name === 'WalkingModel' && walkingAction) {
                 walkingAction.stop();
             }
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
             deselectModel(selectedModel);
         }
         
@@ -798,7 +633,6 @@ function deselectModel(model) {
 
 function onKeyDown(event) {
     const key = event.key.toLowerCase();
-<<<<<<< HEAD
     
     // ESC tuşu ile gizli odadan çık
     if (event.key === 'Escape' && hiddenChamberTourActive) {
@@ -806,8 +640,6 @@ function onKeyDown(event) {
         return;
     }
     
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     if (keys.hasOwnProperty(key)) {
         keys[key] = true;
         event.preventDefault();
@@ -854,12 +686,7 @@ function updateSelectedModel() {
     if (keys.s) moveVector.add(cameraDirection);
     if (keys.a) moveVector.add(cameraRight.clone().multiplyScalar(-1));
     if (keys.d) moveVector.add(cameraRight);
-<<<<<<< HEAD
       // Seçili model WalkingCharacter ise animasyon kontrolü yap
-=======
-    
-    // Seçili model WalkingCharacter ise animasyon kontrolü yap
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     if (selectedModel.name === 'WalkingCharacter' && walkAction) {
         const isMoving = keys.w || keys.s || keys.a || keys.d;
         
@@ -875,7 +702,6 @@ function updateSelectedModel() {
         }
     }
     
-<<<<<<< HEAD
     // Seçili model WalkingModel ise animasyon kontrolü yap
     if (selectedModel.name === 'WalkingModel' && walkingAction) {
         const isMoving = keys.w || keys.s || keys.a || keys.d;
@@ -892,8 +718,6 @@ function updateSelectedModel() {
         }
     }
     
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     // Sadece hareket tuşları basılıysa modeli hareket ettir
     if (keys.w || keys.s || keys.a || keys.d) {
         moveVector.y = 0;
@@ -914,16 +738,11 @@ function updateSelectedModel() {
 function animate() {
     requestAnimationFrame(animate);
     
-<<<<<<< HEAD
     // Animasyon mixer'larını güncelle
-=======
-    // Animasyon mixer'ını güncelle
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     const delta = clock.getDelta();
     if (mixer) {
         mixer.update(delta);
     }
-<<<<<<< HEAD
     if (walkingMixer) {
         walkingMixer.update(delta);
     }
@@ -932,9 +751,6 @@ function animate() {
     updateLightPosition();
     
     // Deve gezintisi animasyonu
-=======
-      // Deve gezintisi animasyonu
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     if (camelTourActive) {
         updateCamelTour();
     }
@@ -944,20 +760,15 @@ function animate() {
         updateTombTour();
     }
     
-<<<<<<< HEAD
     // Gizli oda için sadece alev animasyonu (otomatik tur kaldırıldı)
     if (hiddenChamberTourActive) {
         animateFlames();
     }
       controls.update();
-=======
-    controls.update();
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     updateSelectedModel();
     renderer.render(scene, camera);
 }
 
-<<<<<<< HEAD
 // Otomatik dönen ışık pozisyonu güncellemesi
 function updateLightPosition() {
     if (window.autoRotate) {
@@ -972,8 +783,6 @@ function updateLightPosition() {
     }
 }
 
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
 // Hiyeroglif panelleri için event listener'ları ayarla
 function setupHieroglyphPanels() {
     const panels = document.querySelectorAll('.hieroglyph-panel');
@@ -1149,7 +958,6 @@ function stopSandstorm() {
     console.log('Kum fırtınası durdu!');
 }
 
-<<<<<<< HEAD
 // Gizli Mezar Bulmacası Fonksiyonları
 
 // Mezar bulmacasını göster
@@ -1295,8 +1103,6 @@ function setupTombPuzzleInteraction() {
     });
 }
 
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
 // Global fonksiyonları window objesine ekle (HTML'den erişilebilir olması için)
 window.closeHieroglyphInfo = closeHieroglyphInfo;
 window.startCamelTour = startCamelTour;
@@ -1306,7 +1112,6 @@ window.closeTombPuzzle = closeTombPuzzle;
 window.resetTombPuzzle = resetTombPuzzle;
 window.checkTombSequence = checkTombSequence;
 
-<<<<<<< HEAD
 // Gizli Oda Turu Fonksiyonları
 function createHiddenChamberScene() {
     // Yeni bir container grup oluştur
@@ -1762,133 +1567,10 @@ function startHiddenChamberTour() {
     
     // Kamera kontrollerini ETKİNLEŞTİR (otomatik tur yerine serbest hareket)
     controls.enabled = true;
-=======
-// Mezar bulmacası fonksiyonları
-function setupTombPuzzle() {
-    const hieroglyphs = document.querySelectorAll('.selectable-hieroglyph');
-    hieroglyphs.forEach(hieroglyph => {
-        hieroglyph.addEventListener('click', () => {
-            if (!hieroglyph.classList.contains('used')) {
-                selectHieroglyphForSequence(hieroglyph);
-            }
-        });
-    });
-}
-
-function showTombPuzzle() {
-    tombPuzzleActive = true;
-    document.getElementById('tombPuzzle').style.display = 'block';
-    resetTombPuzzle();
-}
-
-function closeTombPuzzle() {
-    tombPuzzleActive = false;
-    document.getElementById('tombPuzzle').style.display = 'none';
-    resetTombPuzzle();
-}
-
-function selectHieroglyphForSequence(hieroglyphElement) {
-    if (selectedSequence.length >= 4) return;
-    
-    const symbol = hieroglyphElement.dataset.symbol;
-    const meaning = hieroglyphElement.dataset.meaning;
-    
-    selectedSequence.push(meaning);
-    hieroglyphElement.classList.add('used');
-    
-    // Slot'u doldur
-    const slotIndex = selectedSequence.length;
-    const slot = document.getElementById(`slot${slotIndex}`);
-    slot.textContent = symbol;
-    slot.classList.add('filled');
-    
-    // Status'u güncelle
-    updatePuzzleStatus();
-}
-
-function resetTombPuzzle() {
-    selectedSequence = [];
-    
-    // Slot'ları temizle
-    for (let i = 1; i <= 4; i++) {
-        const slot = document.getElementById(`slot${i}`);
-        slot.textContent = '';
-        slot.classList.remove('filled');
-    }
-    
-    // Hiyeroglifleri resetle
-    const hieroglyphs = document.querySelectorAll('.selectable-hieroglyph');
-    hieroglyphs.forEach(h => h.classList.remove('used'));
-    
-    // Status'u temizle
-    document.getElementById('puzzleStatus').textContent = '';
-    document.getElementById('puzzleStatus').className = 'puzzle-status';
-}
-
-function updatePuzzleStatus() {
-    const status = document.getElementById('puzzleStatus');
-    
-    if (selectedSequence.length === 0) {
-        status.textContent = '';
-        status.className = 'puzzle-status';
-    } else if (selectedSequence.length < 4) {
-        status.textContent = `${selectedSequence.length}/4 sembol seçildi. Devam edin...`;
-        status.className = 'puzzle-status';
-    } else {
-        status.textContent = 'Sıra tamamlandı! "Kontrol Et" tuşuna basın.';
-        status.className = 'puzzle-status';
-    }
-}
-
-function checkTombSequence() {
-    if (selectedSequence.length !== 4) {
-        const status = document.getElementById('puzzleStatus');
-        status.textContent = 'Önce 4 sembolü de seçin!';
-        status.className = 'puzzle-status error';
-        return;
-    }
-    
-    const isCorrect = selectedSequence.every((symbol, index) => symbol === correctSequence[index]);
-    const status = document.getElementById('puzzleStatus');
-    
-    if (isCorrect) {
-        status.textContent = '🎉 Doğru! Mezar girişi açılıyor...';
-        status.className = 'puzzle-status success';
-        
-        // 2 saniye sonra mezar turunu başlat
-        setTimeout(() => {
-            closeTombPuzzle();
-            startTombTour();
-        }, 2000);
-    } else {
-        status.textContent = '❌ Yanlış sıra! Tekrar deneyin. İpucu: "Güneş, Su, İnsan, Bilgelik"';
-        status.className = 'puzzle-status error';
-        
-        // 3 saniye sonra resetle
-        setTimeout(() => {
-            resetTombPuzzle();
-        }, 3000);
-    }
-}
-
-function startTombTour() {
-    if (tombTourActive) return;
-    
-    tombTourActive = true;
-    tombTourStartTime = Date.now();
-    
-    // Orijinal kamera pozisyonunu kaydet
-    originalCameraPosition.copy(camera.position);
-    originalCameraTarget.copy(controls.target);
-    
-    // Kontrolleri devre dışı bırak
-    controls.enabled = false;
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     
     // Overlay'i göster
     const overlay = document.getElementById('tombTourOverlay');
     overlay.classList.add('tomb-tour-active');
-<<<<<<< HEAD
       // Sahne ışığını artır
     directionalLight.intensity = 0.5; // 0.3'ten 0.5'e artırıldı
     ambientLight.intensity = 0.3; // 0.2'den 0.3'e artırıldı
@@ -2000,68 +1682,10 @@ function stopHiddenChamberTour() {
     if (!hiddenChamberTourActive) return;
     
     hiddenChamberTourActive = false;
-=======
-    
-    // Sahne ışığını azalt (mezar atmosferi)
-    ambientLight.intensity = 0.1;
-    directionalLight.intensity = 0.3;
-    
-    console.log('Mezar turu başladı!');
-}
-
-function updateTombTour() {
-    const elapsed = Date.now() - tombTourStartTime;
-    const progress = Math.min(elapsed / tombTourDuration, 1);
-    
-    // Otomatik olarak durdur
-    if (progress >= 1) {
-        stopTombTour();
-        return;
-    }
-    
-    const textElement = document.getElementById('tombTourText');
-    
-    // Farklı aşamalarda farklı metinler göster
-    if (progress < 0.2) {
-        textElement.textContent = '🏺 Gizli mezara giriyorsunuz...';
-        // Kamerayı piramit içine götür
-        camera.position.set(2, 3, 2);
-        controls.target.set(0, 1, 0);
-    } else if (progress < 0.4) {
-        textElement.textContent = '🕯️ Antik duvar resimleri görünüyor...';
-        // Kamerayı duvarlara çevir
-        camera.position.set(1, 2, 3);
-        controls.target.set(0, 2, 0);
-    } else if (progress < 0.6) {
-        textElement.textContent = '⚱️ Firavunun mezar odasına yaklaşıyorsunuz...';
-        // Daha derine git
-        camera.position.set(-1, 1.5, 1);
-        controls.target.set(0, 1, -2);
-    } else if (progress < 0.8) {
-        textElement.textContent = '💎 Değerli hazineler keşfediyorsunuz...';
-        // Hazine odasına bak
-        camera.position.set(-2, 2, -1);
-        controls.target.set(0, 1, -3);
-    } else {
-        textElement.textContent = '🚪 Mezardan çıkış yapıyorsunuz...';
-        // Çıkışa doğru
-        camera.position.set(3, 4, 3);
-        controls.target.set(0, 0, 0);
-    }
-    
-    controls.update();
-}
-
-function stopTombTour() {
-    if (!tombTourActive) return;
-    
-    tombTourActive = false;
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
     
     // Overlay'i gizle
     const overlay = document.getElementById('tombTourOverlay');
     overlay.classList.remove('tomb-tour-active');
-<<<<<<< HEAD
       // Ana sahne objelerini geri göster
     models.forEach(model => {
         if (model) model.visible = true;
@@ -2353,22 +1977,6 @@ function hideChamberLightControls() {
         controlPanel.classList.remove('active');
         chamberLightControlsActive = false;
     }
-=======
-    
-    // Kamera kontrollerini geri etkinleştir
-    controls.enabled = true;
-    
-    // Kamera pozisyonunu orijinal haline getir
-    camera.position.copy(originalCameraPosition);
-    controls.target.copy(originalCameraTarget);
-    controls.update();
-    
-    // Işıkları normale döndür
-    ambientLight.intensity = 0.4;
-    directionalLight.intensity = 1.5;
-    
-    console.log('Mezar turu tamamlandı!');
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
 }
 
 // Başlat

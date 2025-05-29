@@ -111,12 +111,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-<<<<<<< HEAD
         }        .sun-control-row label {
-=======
-        }
-          .sun-control-row label {
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
             width: 20px;
             margin: 0;
         }        /* Gizli Oda Işık Kontrolleri */
@@ -715,322 +710,6 @@
         .discovery-counter {
             display: none;
         }
-        
-        /* Hiyeroglif Panel Stilleri */
-        .hieroglyph-panel {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: rgba(139, 69, 19, 0.9);
-            border: 3px solid #8B4513;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: #FFD700;
-            transition: all 0.3s ease;
-            z-index: 50;
-        }
-        
-        .hieroglyph-panel:hover {
-            background: rgba(139, 69, 19, 1);
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-        
-        .hieroglyph-info {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 400px;
-            z-index: 200;
-            display: none;
-            border: 2px solid #FFD700;
-        }
-        
-        .hieroglyph-info h3 {
-            color: #FFD700;
-            margin-top: 0;
-        }
-        
-        .hieroglyph-puzzle {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(139, 69, 19, 0.3);
-            border-radius: 5px;
-        }
-        
-        .puzzle-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .puzzle-option {
-            padding: 8px;
-            background: rgba(255, 215, 0, 0.2);
-            border: 1px solid #FFD700;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-            transition: background 0.3s;
-        }
-        
-        .puzzle-option:hover {
-            background: rgba(255, 215, 0, 0.4);
-        }
-        
-        .puzzle-option.correct {
-            background: rgba(0, 255, 0, 0.3);
-        }
-        
-        .puzzle-option.wrong {
-            background: rgba(255, 0, 0, 0.3);
-        }
-        
-        .close-btn {
-            float: right;
-            background: none;
-            border: none;
-            color: #FFD700;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0;
-            width: 25px;
-            height: 25px;
-        }
-        
-        /* Deve Gezintisi Kontrolleri */
-        .camel-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            z-index: 100;
-        }
-        
-        .camel-btn {
-            background: linear-gradient(45deg, #8B4513, #CD853F);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 5px;
-            transition: all 0.3s ease;
-        }
-        
-        .camel-btn:hover {
-            background: linear-gradient(45deg, #CD853F, #8B4513);
-            transform: translateY(-2px);
-        }
-        
-        .camel-btn:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        /* Kum Fırtınası Efekti */
-        .sandstorm-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, transparent 20%, rgba(194, 154, 108, 0.3) 80%);
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 2s ease;
-        }
-          .sandstorm-active {
-            opacity: 1;
-        }
-        
-        /* Gizli Mezar Bulmacası */
-        .tomb-puzzle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 500px;
-            z-index: 300;
-            display: none;
-            border: 3px solid #FFD700;
-            text-align: center;
-        }
-        
-        .tomb-puzzle h2 {
-            color: #FFD700;
-            margin-top: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        }
-        
-        .hieroglyph-sequence {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        .sequence-slot {
-            width: 60px;
-            height: 60px;
-            background: rgba(139, 69, 19, 0.5);
-            border: 2px dashed #FFD700;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: #FFD700;
-            position: relative;
-        }
-        
-        .sequence-slot.filled {
-            background: rgba(139, 69, 19, 0.9);
-            border: 2px solid #FFD700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-        }
-        
-        .sequence-number {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #FFD700;
-            color: black;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .available-hieroglyphs {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        .selectable-hieroglyph {
-            width: 50px;
-            height: 50px;
-            background: rgba(139, 69, 19, 0.8);
-            border: 2px solid #8B4513;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: #FFD700;
-            transition: all 0.3s ease;
-        }
-        
-        .selectable-hieroglyph:hover {
-            background: rgba(139, 69, 19, 1);
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-        }
-        
-        .selectable-hieroglyph.used {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .puzzle-controls {
-            margin-top: 20px;
-        }
-        
-        .puzzle-btn {
-            background: linear-gradient(45deg, #8B4513, #CD853F);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 5px;
-            transition: all 0.3s ease;
-        }
-        
-        .puzzle-btn:hover {
-            background: linear-gradient(45deg, #CD853F, #8B4513);
-            transform: translateY(-2px);
-        }
-        
-        .puzzle-btn:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .puzzle-status {
-            margin: 15px 0;
-            font-weight: bold;
-            min-height: 24px;
-        }
-        
-        .puzzle-status.success {
-            color: #00ff00;
-        }
-        
-        .puzzle-status.error {
-            color: #ff6666;
-        }
-        
-        /* Mezar Turu Animasyonu */
-        .tomb-tour-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            pointer-events: none;
-            z-index: 250;
-            opacity: 0;
-            transition: opacity 1s ease;
-        }
-        
-        .tomb-tour-active {
-            opacity: 1;
-        }
-        
-        .tomb-tour-text {
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #FFD700;
-            font-size: 18px;
-            text-align: center;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        }
     </style>
 </head>
 <body>
@@ -1126,10 +805,7 @@
                 <button id="resetChamberLights" class="control-btn">Varsayılana Sıfırla</button>
             </div>
         </div>
-<<<<<<< HEAD
 
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
           <!-- Info panelini güncelle -->
         <div id="info">
             <h3>📋 Kontroller</h3>
@@ -1145,7 +821,6 @@
             <p id="selectedModel">Seçili Model: Yok</p>
             <p id="characterStatus">Karakter: Bekliyor</p>
         </div>
-<<<<<<< HEAD
           <!-- Hiyeroglif Panelleri -->
         <div class="hieroglyph-panels-container">
             <div class="hieroglyph-panel" id="panel1">𓈖</div>
@@ -1155,16 +830,6 @@
             <div class="hieroglyph-panel" id="panel5">𓈙</div>
             <div class="hieroglyph-panel" id="panel6">𓆣</div>
         </div>
-=======
-        
-        <!-- Hiyeroglif Panelleri -->
-        <div class="hieroglyph-panel" id="panel1" style="top: 20%; left: 5%;">𓈖</div>
-        <div class="hieroglyph-panel" id="panel2" style="top: 40%; left: 5%;">𓅓</div>
-        <div class="hieroglyph-panel" id="panel3" style="top: 60%; left: 5%;">𓂀</div>
-        <div class="hieroglyph-panel" id="panel4" style="top: 20%; right: 5%;">𓊪</div>
-        <div class="hieroglyph-panel" id="panel5" style="top: 40%; right: 5%;">𓈙</div>
-        <div class="hieroglyph-panel" id="panel6" style="top: 60%; right: 5%;">𓆣</div>
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
         
         <!-- Hiyeroglif Bilgi Paneli -->
         <div id="hieroglyphInfo" class="hieroglyph-info">
@@ -1180,18 +845,12 @@
             </div>
         </div>
         
-<<<<<<< HEAD
         <!-- Deve Gezintisi Kontrolleri -->        <div class="camel-controls">
-=======
-        <!-- Deve Gezintisi Kontrolleri -->
-        <div class="camel-controls">
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
             <h4 style="margin: 0 0 10px 0; color: #FFD700;">🐪 Deve Gezintisi</h4>
             <button class="camel-btn" id="startCamelTour" onclick="startCamelTour()">Deve Turunu Başlat</button>
             <button class="camel-btn" id="stopCamelTour" onclick="stopCamelTour()" disabled>Turu Durdur</button>
             <p style="margin: 5px 0 0 0; font-size: 12px;">Kervan boyunca otomatik kamera hareketi</p>
         </div>
-<<<<<<< HEAD
 
         <!-- Vaha Keşfi (Oasis Discovery) Kontrolleri -->
         <button class="oasis-info-toggle" onclick="toggleOasisMode()">🌴 Vaha Keşfi</button>
@@ -1223,8 +882,6 @@
             </div>
         </div>
 
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
           <!-- Kum Fırtınası Overlay -->
         <div id="sandstormOverlay" class="sandstorm-overlay"></div>
         
@@ -1272,7 +929,6 @@
             <div class="tomb-tour-text" id="tombTourText">
                 Gizli mezara giriyorsunuz...
             </div>
-<<<<<<< HEAD
         </div>
         
         <!-- Vaha Keşfi Overlay -->
@@ -1295,8 +951,6 @@
                 <div>Bitki Türü: <span id="plantSpeciesCount">0</span></div>
             </div>
             <button class="oasis-info-toggle" id="toggleOasisInfo">Bilgi Göster/Gizle</button>
-=======
->>>>>>> f668638b333c7003eeaaa27aac025a4d5ca07d46
         </div>
     </div>
 
