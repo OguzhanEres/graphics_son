@@ -1,3 +1,5 @@
+NOTE: If you encounter errors when running the project, please try the origin/ed version.
+
 # Interactive 3D Desert Scene
 
 An interactive 3D desert scene built with Three.js featuring Egyptian monuments, character animations, and exploration mechanics.
