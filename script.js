@@ -1408,11 +1408,15 @@ function checkTombSequence() {
     
     // Check correct sequence
     const isCorrect = selectedSequence.every((symbol, index) => 
-        symbol === correctSequence[index]    );
+        symbol === correctSequence[index]
+    );
     
     if (isCorrect) {
         statusElement.textContent = '🎉 Congratulations! Hidden tomb opened!';
         statusElement.className = 'puzzle-status success';
+        
+        // Show simple treasure notification
+        showSimpleTreasureNotification();
         
         // Start hidden chamber tour after a short delay
         setTimeout(() => {
@@ -1432,6 +1436,78 @@ function checkTombSequence() {
         
         console.log('Mezar bulmacası yanlış çözüldü');
     }
+}
+
+// Simple treasure notification function
+function showSimpleTreasureNotification() {
+    // Create simple notification
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #FFD700;
+        padding: 15px 20px;
+        border-radius: 8px;
+        border: 2px solid #FFD700;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 10000;
+        animation: slideIn 1.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    `;
+    
+    notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">💰</span>
+            <span>You have reached the great treasure!</span>
+        </div>
+    `;
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 1.3s ease-in';
+        setTimeout(() => {
+            if (notification && notification.parentNode) {
+                document.body.removeChild(notification);
+            }
+            if (style && style.parentNode) {
+                document.head.removeChild(style);
+            }
+        }, 300);
+    }, 3000);
+    
+    console.log('🏆 Great treasure notification shown');
 }
 
 // Hiyeroglif seçimi için event listener'ları ayarla
