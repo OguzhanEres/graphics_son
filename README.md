@@ -95,15 +95,11 @@ An interactive 3D desert scene built with Three.js featuring Egyptian monuments,
   - Speed slider for sun rotation
   - Manual X, Y, Z position sliders
   - Light intensity adjustment
-- **Oasis Discovery Panel**: 
-  - Toggle exploration mode
-  - Track found plants (0/5) and water sources (0/3)
 - **Hieroglyph Panels**: Click to reveal ancient Egyptian symbol information
 - **Chamber Lights Panel**: 
   - Multiple light source controls
   - Color picker for ambient lighting
   - Position controls for chamber exploration
-- **Tour Controls**: Start automated camel caravan tours
 
 ## 🎯 Game Features
 
@@ -134,7 +130,7 @@ The current application uses a **monolithic architecture** with all functionalit
 - **Animation System**: Character animation management with mixers and actions
 - **Input Handling**: Keyboard and mouse event management
 - **UI Controls**: Dynamic panel controls with real-time updates
-- **Game Logic**: Oasis discovery, hieroglyph puzzles, and tour systems
+- **Game Logic**: Hieroglyph puzzles, and tour systems
 
 ### Key Technologies
 - **Three.js**: 3D graphics and WebGL rendering
