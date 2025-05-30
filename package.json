@@ -1,0 +1,32 @@
+{
+  "name": "interactive-desert-scene",
+  "version": "1.0.0",
+  "description": "Interactive 3D desert scene with Egyptian monuments and character animations",
+  "main": "js/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx http-server . -p 8080 -c-1",
+    "dev": "npx live-server --port=8080 --no-browser",
+    "build": "echo 'Build script placeholder'",
+    "serve": "python -m http.server 8080"
+  },
+  "keywords": [
+    "three.js",
+    "3d",
+    "webgl",
+    "fbx",
+    "interactive",
+    "desert",
+    "egyptian",
+    "animation"
+  ],
+  "author": "Desert Scene Developer",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  }
+}
