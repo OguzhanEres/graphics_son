@@ -114,7 +114,7 @@
         }        .sun-control-row label {
             width: 20px;
             margin: 0;
-        }        /* Gizli Oda Işık Kontrolleri */
+        }        /* Hidden Chamber Light Controls */
         #chamberLightControls {
             position: absolute;
             bottom: 10px;
@@ -128,7 +128,7 @@
             max-height: 90vh;
             overflow-y: auto;
             backdrop-filter: blur(5px);
-            display: none; /* Başlangıçta gizli */
+            display: none; /* Initially hidden */
             border: 2px solid #8B4513;
         }
 
@@ -293,7 +293,7 @@
             padding: 0;
             width: 25px;
             height: 25px;        }
-          /* Gizli Mezar Bulmacası */
+          /* Hidden Tomb Puzzle */
         .tomb-puzzle {
             position: absolute;
             top: 50%;
@@ -468,7 +468,7 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
         
-        /* Vaha Keşfi (Oasis Discovery) Stilleri */        .oasis-panel {
+        /* Oasis Discovery Styles */        .oasis-panel {
             position: absolute;
             background: rgba(0, 139, 139, 0.98);
             color: white;
@@ -650,7 +650,7 @@
             text-shadow: 0 0 10px #40E0D0;
         }
         
-        /* Başlangıçta gizle */
+        /* Initially hide */
         .plant-indicator,
         .water-indicator,
         .discovery-counter {
@@ -659,15 +659,31 @@
     </style>
 </head>
 <body>
-    <div id="container">
-        <div id="loading">
-            <div>FBX Modeller Yükleniyor...</div>
-            <div style="font-size: 14px; margin-top: 10px;">Lütfen bekleyin...</div>
+    <div id="container">        <div id="loading">
+            <div>Loading FBX Models...</div>
+            <div style="font-size: 14px; margin-top: 10px;">Please wait...</div>
             <div id="loadingProgress" style="font-size: 12px; margin-top: 5px;">0%</div>
-        </div>
-        
-        <div id="controls">
-            <h3>🌞 Güneş Kontrolleri</h3>
+        </div>        <div id="controls">
+            <h3>🌞 Sun Controls</h3>
+            
+            <!-- Automatic Movement Control -->
+            <div class="control-group">
+                <div class="auto-control-row">
+                    <label for="autoRotate">
+                        <input type="checkbox" id="autoRotate" checked>
+                        Automatic Movement
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Automatic Movement Speed -->
+            <div class="control-group">
+                <label>Movement Speed:</label>
+                <input type="range" id="rotationSpeed" min="0.1" max="3" value="1.0" step="0.1">
+                <input type="number" id="rotationSpeedValue" value="1.0" step="0.1">
+            </div>
+            
+            <!-- Manuel Pozisyon Kontrolleri -->
             <div class="control-group">
                 <div class="sun-controls">
                     <div class="sun-control-row">
@@ -677,8 +693,8 @@
                     </div>
                     <div class="sun-control-row">
                         <label>Y:</label>
-                        <input type="range" id="sunY" min="5" max="50" value="25" step="0.5">
-                        <input type="number" id="sunYValue" value="25" step="0.5">
+                        <input type="range" id="sunY" min="5" max="50" value="15" step="0.5">
+                        <input type="number" id="sunYValue" value="15" step="0.5">
                     </div>
                     <div class="sun-control-row">
                         <label>Z:</label>
@@ -687,42 +703,37 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="control-group">
-                <label>Işık Yoğunluğu:</label>
-                <input type="range" id="lightIntensity" min="0.1" max="3" value="1.5" step="0.1">
-                <input type="number" id="lightIntensityValue" value="1.5" step="0.1">
-            </div>        </div>
-
-        <!-- Gizli Oda Işık Kontrolleri -->
-        <div id="chamberLightControls" class="hidden-chamber-controls">
-            <h3>🔥 Gizli Oda Işıkları</h3>
               <div class="control-group">
-                <label>Ana Işık Yoğunluğu:</label>
+                <label>Light Intensity:</label>
+                <input type="range" id="lightIntensity" min="0.1" max="3" value="1.2" step="0.1">
+                <input type="number" id="lightIntensityValue" value="1.2" step="0.1">
+            </div></div>        <!-- Hidden Chamber Light Controls -->
+        <div id="chamberLightControls" class="hidden-chamber-controls">
+            <h3>🔥 Hidden Chamber Lights</h3>              <div class="control-group">
+                <label>Main Light Intensity:</label>
                 <input type="range" id="chamberMainIntensity" min="0.1" max="5" value="4.0" step="0.1">
                 <input type="number" id="chamberMainIntensityValue" value="4.0" step="0.1">
             </div>
             
             <div class="control-group">
-                <label>Ortam Işığı:</label>
+                <label>Ambient Light:</label>
                 <input type="range" id="chamberAmbientIntensity" min="0.1" max="2" value="1.5" step="0.1">
                 <input type="number" id="chamberAmbientIntensityValue" value="1.5" step="0.1">
             </div>
             
             <div class="control-group">
-                <label>Meşale Işıkları:</label>
+                <label>Torch Lights:</label>
                 <input type="range" id="chamberTorchIntensity" min="0.1" max="2" value="1.5" step="0.1">
                 <input type="number" id="chamberTorchIntensityValue" value="1.5" step="0.1">
             </div>
             
             <div class="control-group">
-                <label>Sanduka Spot Işığı:</label>
+                <label>Sarcophagus Spotlight:</label>
                 <input type="range" id="chamberSarcophagusIntensity" min="0.1" max="3" value="2.0" step="0.1">
                 <input type="number" id="chamberSarcophagusIntensityValue" value="2.0" step="0.1">
             </div>
-            
-            <div class="control-group">
-                <label>Ana Işık Pozisyonu</label>
+              <div class="control-group">
+                <label>Main Light Position</label>
                 <div class="light-position-controls">
                     <div class="position-row">
                         <label>X:</label>
@@ -741,31 +752,23 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="control-group">
-                <label>Işık Rengi:</label>
+              <div class="control-group">
+                <label>Light Color:</label>
                 <input type="color" id="chamberLightColor" value="#ffffaa">
             </div>
             
             <div class="control-group">
-                <button id="resetChamberLights" class="control-btn">Varsayılana Sıfırla</button>
+                <button id="resetChamberLights" class="control-btn">Reset to Default</button>
             </div>
-        </div>
-
-          <!-- Info panelini güncelle -->
+        </div>          <!-- Update info panel -->
         <div id="info">
-            <h3>📋 Kontroller</h3>
-            <p><strong>Mouse:</strong> Sahneyi döndür/yakınlaştır</p>
-            <p><strong>WASD:</strong> Karakteri hareket ettir</p>
-            <p><strong>Sol Tık:</strong> Diğer modelleri seç</p>
-            <p><strong>Shift+WASD:</strong> Seçili modeli hareket ettir</p>
-            <p><strong>Güneş:</strong> Sol panelden konumunu ayarla</p>
-            <p><strong>Gölgeler:</strong> Güneş hareketiyle değişir</p>            
-            <p><strong>🏺 Hiyeroglif:</strong> Duvar panellerine tıkla</p>
-            <p><strong>🏺 Mezar:</strong> Piramide tıkla ve bulmacayı çöz</p>
+            <h3>📋 Controls</h3>
+            <p><strong>Mouse:</strong> Rotate/zoom scene</p>
+            <p><strong>WASD:</strong> Move character</p>
+            <p><strong>Left Click:</strong> Select other models</p>
             <hr style="border-color: #444;">
-            <p id="selectedModel">Seçili Model: Yok</p>
-            <p id="characterStatus">Karakter: Bekliyor</p>
+            <p id="selectedModel">Selected Model: None</p>
+            <p id="characterStatus">Character: Waiting</p>
         </div>
           <!-- Hiyeroglif Panelleri -->
         <div class="hieroglyph-panels-container">
@@ -776,56 +779,50 @@
             <div class="hieroglyph-panel" id="panel5">𓈙</div>
             <div class="hieroglyph-panel" id="panel6">𓆣</div>
         </div>
-        
-        <!-- Hiyeroglif Bilgi Paneli -->
+          <!-- Hieroglyph Information Panel -->
         <div id="hieroglyphInfo" class="hieroglyph-info">
             <button class="close-btn" onclick="closeHieroglyphInfo()">×</button>
-            <h3 id="hieroglyphTitle">Hiyeroglif Simgesi</h3>
-            <p id="hieroglyphDescription">Bu antik Mısır sembolü hakkında bilgi...</p>
+            <h3 id="hieroglyphTitle">Hieroglyph Symbol</h3>
+            <p id="hieroglyphDescription">Information about this ancient Egyptian symbol...</p>
             <div class="hieroglyph-puzzle">
-                <h4>🧩 Mini Bulmaca: Bu simge neyi temsil ediyor?</h4>
+                <h4>🧩 Mini Puzzle: What does this symbol represent?</h4>
                 <div class="puzzle-options" id="puzzleOptions">
-                    <!-- Seçenekler dinamik olarak eklenecek -->
+                    <!-- Options will be added dynamically -->
                 </div>
                 <p id="puzzleResult" style="margin-top: 10px; font-weight: bold;"></p>
             </div>
-        </div>
-  
-
-        <!-- Vaha Keşfi (Oasis Discovery) Kontrolleri -->
-        <button class="oasis-info-toggle" onclick="toggleOasisMode()">🌴 Vaha Keşfi</button>
+        </div>        <!-- Oasis Discovery Controls -->
+        <button class="oasis-info-toggle" onclick="toggleOasisMode()">🌴 Oasis Discovery</button>
         
         <div class="discovery-counter" id="discoveryCounter">
-            <h4>🌊 Keşfedilen</h4>
-            <div>Bitkiler: <span id="plantsDiscovered">0</span>/5</div>
-            <div>Su Kaynakları: <span id="waterDiscovered">0</span>/3</div>
+            <h4>🌊 Discovered</h4>
+            <div>Plants: <span id="plantsDiscovered">0</span>/5</div>
+            <div>Water Sources: <span id="waterDiscovered">0</span>/3</div>
         </div>
 
-        <!-- Bitki İndikatörleri -->
+        <!-- Plant Indicators -->
         <div class="plant-indicator" id="plant1" style="top: 200px; left: 300px;" onclick="discoverPlant(1)"></div>
         <div class="plant-indicator" id="plant2" style="top: 150px; left: 500px;" onclick="discoverPlant(2)"></div>
         <div class="plant-indicator" id="plant3" style="top: 250px; left: 700px;" onclick="discoverPlant(3)"></div>
         <div class="plant-indicator" id="plant4" style="top: 180px; left: 600px;" onclick="discoverPlant(4)"></div>
         <div class="plant-indicator" id="plant5" style="top: 220px; left: 400px;" onclick="discoverPlant(5)"></div>
 
-        <!-- Su Kaynağı İndikatörleri -->
+        <!-- Water Source Indicators -->
         <div class="water-indicator" id="water1" style="top: 300px; left: 450px;" onclick="discoverWater(1)"></div>
         <div class="water-indicator" id="water2" style="top: 350px; left: 550px;" onclick="discoverWater(2)"></div>
         <div class="water-indicator" id="water3" style="top: 280px; left: 350px;" onclick="discoverWater(3)"></div>
 
-        <!-- Vaha Bilgi Paneli -->
+        <!-- Oasis Information Panel -->
         <div class="oasis-panel" id="oasisPanel">
             <button class="close-btn" onclick="closeOasisPanel()">×</button>
-            <h3 id="oasisTitle">🌴 Keşif Bilgisi</h3>
+            <h3 id="oasisTitle">🌴 Discovery Information</h3>
             <div id="oasisContent">
-                <p>Çölün ortasında bulduğunuz bu vaha, binlerce yıldır yolcuları ağırlamış.</p>
-            </div>        </div>
-
-        <!-- Gizli Mezar Bulmacası -->
+                <p>This oasis you found in the middle of the desert has been welcoming travelers for thousands of years.</p>
+            </div>        </div>        <!-- Hidden Tomb Puzzle -->
         <div id="tombPuzzle" class="tomb-puzzle">
-            <h2>🏺 Gizli Mezar Girişi</h2>
-            <p>Mezara girebilmek için hiyeroglifleri doğru sırada seçin:</p>
-            <p style="font-style: italic; color: #FFD700;">"Güneş, Su, İnsan, Bilgelik"</p>
+            <h2>🏺 Hidden Tomb Entrance</h2>
+            <p>To enter the tomb, select the hieroglyphs in the correct order:</p>
+            <p style="font-style: italic; color: #FFD700;">"Sun, Water, Human, Wisdom"</p>
             
             <div class="hieroglyph-sequence">
                 <div class="sequence-slot" id="slot1">
@@ -854,11 +851,11 @@
             <div class="puzzle-status" id="puzzleStatus"></div>
             
             <div class="puzzle-controls">
-                <button class="puzzle-btn" onclick="resetTombPuzzle()">Temizle</button>
-                <button class="puzzle-btn" onclick="checkTombSequence()">Kontrol Et</button>
-                <button class="puzzle-btn" onclick="closeTombPuzzle()">Kapat</button>
+                <button class="puzzle-btn" onclick="resetTombPuzzle()">Clear</button>
+                <button class="puzzle-btn" onclick="checkTombSequence()">Check</button>
+                <button class="puzzle-btn" onclick="closeTombPuzzle()">Close</button>
             </div>
-        </div>  
+        </div>
     </div>
 
     <!-- Import Map -->
@@ -933,9 +930,9 @@ function onKeyUp(event) {
 function updateCharacterStatus() {
     const statusElement = document.getElementById('characterStatus');
     if (keys.w || keys.a || keys.s || keys.d) {
-        statusElement.textContent = 'Karakter: Yürüyor';
+        statusElement.textContent = 'Character: Walking';
     } else {
-        statusElement.textContent = 'Karakter: Bekliyor';
+        statusElement.textContent = 'Character: Standing';
     }
 }
 </script>
