@@ -8,6 +8,7 @@ let scene, camera, renderer, controls;
 let plane, sun, directionalLight, ambientLight;
 let selectedModel = null;
 const models = [];
+let desertTerrain = null; // ← BU SATIRI EKLEYIN
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const keys = { w: false, a: false, s: false, d: false };
@@ -451,43 +452,103 @@ function loadModels() {
 function loadCharacterWithAnimations() {
     const fbxLoader = new FBXLoader();
     let characterModel = null;
+    let modelsLoaded = 0;
+    const totalModelsNeeded = 2;
     
-    // First load the base character model (kosma.fbx for walking animation)
+    function checkComplete() {
+        modelsLoaded++;
+        if (modelsLoaded >= totalModelsNeeded) {
+            console.log('Both models loaded, connecting animations...');
+            connectAnimations();
+        }
+    }
+    
+    function connectAnimations() {
+        if (window.kosmaAnimation && sabitMixer && characterModel) {
+            console.log('Connecting kosma animation to sabit model...');
+            
+            // Filter kosma animation tracks - remove position tracks that cause movement
+            const filteredTracks = window.kosmaAnimation.tracks.filter(track => {
+                // Keep only rotation and scale tracks, exclude position
+                return !track.name.includes('.position');
+            });
+            
+            console.log('Kosma original track count:', window.kosmaAnimation.tracks.length);
+            console.log('Kosma filtered track count:', filteredTracks.length);
+
+            // Create filtered walking animation clip
+            const filteredAnimation = new THREE.AnimationClip(
+                'WalkingAnimation',
+                window.kosmaAnimation.duration,
+                filteredTracks
+            );
+            
+            // Create the walking action
+            kosmaAction = sabitMixer.clipAction(filteredAnimation);
+            kosmaAction.setLoop(THREE.LoopRepeat, Infinity);
+            kosmaAction.clampWhenFinished = false;
+            kosmaAction.zeroSlopeAtStart = false;
+            kosmaAction.zeroSlopeAtEnd = false;
+            kosmaAction.timeScale = 1.0;
+            kosmaAction.setEffectiveWeight(0.0);
+            kosmaAction.enabled = true;
+            kosmaAction.play();
+            kosmaAction.paused = true;
+            
+            console.log('Kosma walking animation successfully connected!');
+            console.log('Animation name:', filteredAnimation.name);
+            console.log('Animation duration:', filteredAnimation.duration);
+        } else {
+            console.error('Failed to connect animations - missing components:');
+            console.log('kosmaAnimation:', !!window.kosmaAnimation);
+            console.log('sabitMixer:', !!sabitMixer);
+            console.log('characterModel:', !!characterModel);
+        }
+    }
+    
+    // Load kosma.fbx first (for walking animation)
     fbxLoader.load(
         './kosma.fbx',
         (object) => {
-            console.log('Kosma model loaded:', object);
+            console.log('Kosma model loaded successfully:', object);
             
-            // Check animations and store globally
             if (object.animations && object.animations.length > 0) {
                 console.log('Kosma animations found:', object.animations.length);
                 
                 // Store the walking animation globally
                 window.kosmaAnimation = object.animations[0];
                 
-                console.log('Kosma animation saved:', object.animations[0].name);
+                console.log('Kosma animation details:');
+                console.log('- Name:', object.animations[0].name);
+                console.log('- Duration:', object.animations[0].duration);
+                console.log('- Tracks:', object.animations[0].tracks.length);
+                
+                // Log track details for debugging
+                object.animations[0].tracks.forEach((track, index) => {
+                    console.log(`- Track ${index}: ${track.name} (${track.times.length} keyframes)`);
+                });
+                
             } else {
-                console.log('No kosma animation found');
+                console.error('No animations found in kosma.fbx!');
             }
             
-            // Don't add this model to scene, just use for animation data
-            onModelLoaded();
+            checkComplete();
         },
         (progress) => {
-            console.log('Kosma model loading:', (progress.loaded / progress.total * 100) + '%');
+            console.log('Kosma model loading progress:', (progress.loaded / progress.total * 100) + '%');
             updateLoadingProgress(5, progress.loaded / progress.total);
         },
         (error) => {
-            console.error('Kosma model could not be loaded:', error);
-            onModelLoaded();
+            console.error('Failed to load kosma.fbx:', error);
+            checkComplete(); // Continue even if kosma fails
         }
     );
 
-    // Load the idle character model (sabit.fbx for idle animation)
+    // Load sabit.fbx second (for idle animation and main model)
     fbxLoader.load(
         './sabit.fbx',
         (object) => {
-            console.log('Sabit model loaded:', object);
+            console.log('Sabit model loaded successfully:', object);
             object.position.set(-5, 0, 0); 
             object.scale.set(0.01, 0.01, 0.01);
             
@@ -511,26 +572,28 @@ function loadCharacterWithAnimations() {
                 }
             });
 
-            // Check animations
+            // Setup idle animation from sabit.fbx
             if (object.animations && object.animations.length > 0) {
                 console.log('Sabit animations found:', object.animations.length);
                 
                 // Create AnimationMixer
                 sabitMixer = new THREE.AnimationMixer(object);
-                characterMixer = sabitMixer; // Set characterMixer reference
+                characterMixer = sabitMixer;
 
-                // Prepare idle animation (from sabit.fbx)
-                // Filter position tracks - only use rotation and scale
+                // Filter idle animation tracks
                 const sabitFilteredTracks = object.animations[0].tracks.filter(track => {
                     return !track.name.includes('.position');
                 });
                 
-                console.log('Sabit original track count:', object.animations[0].tracks.length);
-                console.log('Sabit filtered track count:', sabitFilteredTracks.length);
+                console.log('Sabit animation details:');
+                console.log('- Name:', object.animations[0].name);
+                console.log('- Duration:', object.animations[0].duration);
+                console.log('- Original tracks:', object.animations[0].tracks.length);
+                console.log('- Filtered tracks:', sabitFilteredTracks.length);
 
                 // Create idle animation clip
                 const sabitFilteredAnimation = new THREE.AnimationClip(
-                    object.animations[0].name + '_idle',
+                    'IdleAnimation',
                     object.animations[0].duration,
                     sabitFilteredTracks
                 );
@@ -545,101 +608,38 @@ function loadCharacterWithAnimations() {
                 sabitAction.enabled = true;
                 sabitAction.play();
                 
-                console.log('Sabit animation prepared and started:', object.animations[0].name);
+                console.log('Sabit idle animation started successfully');
             } else {
-                console.log('No sabit animation found');
-            }
-
-            // Add kosma animation to this mixer (if loaded)
-            if (window.kosmaAnimation) {
-                console.log('Adding kosma animation to sabit model...');
-                
-                // Filter kosma animation tracks - remove all position tracks
-                const filteredTracks = window.kosmaAnimation.tracks.filter(track => {
-                    return !track.name.includes('.position');
-                });
-                
-                console.log('Kosma original track count:', window.kosmaAnimation.tracks.length);
-                console.log('Kosma filtered track count:', filteredTracks.length);
-
-                // Create filtered walking animation clip
-                const filteredAnimation = new THREE.AnimationClip(
-                    window.kosmaAnimation.name + '_walking',
-                    window.kosmaAnimation.duration,
-                    filteredTracks
-                );
-                
-                kosmaAction = sabitMixer.clipAction(filteredAnimation);
-                kosmaAction.setLoop(THREE.LoopRepeat, Infinity);
-                kosmaAction.clampWhenFinished = false;
-                kosmaAction.zeroSlopeAtStart = false;
-                kosmaAction.zeroSlopeAtEnd = false;
-                kosmaAction.timeScale = 1.0;
-                kosmaAction.setEffectiveTimeScale(1.0);
-                kosmaAction.setEffectiveWeight(0.0);
-                kosmaAction.enabled = true;
-                kosmaAction.reset();
-                kosmaAction.play();
-                kosmaAction.paused = true;
-                console.log('Kosma animation prepared (position filtered):', filteredAnimation.name);
-            } else {
-                console.log('Kosma animation not yet loaded, will connect later');
-                // Try to connect animation later if it loads delayed
-                setTimeout(() => {
-                    if (window.kosmaAnimation && sabitMixer) {
-                        console.log('Connecting kosma animation delayed...');
-                        
-                        // Filter position tracks completely
-                        const filteredTracks = window.kosmaAnimation.tracks.filter(track => {
-                            return !track.name.includes('.position');
-                        });
-
-                        // Create delayed kosma animation
-                        const filteredAnimation = new THREE.AnimationClip(
-                            window.kosmaAnimation.name + '_walking_delayed',
-                            window.kosmaAnimation.duration,
-                            filteredTracks
-                        );
-                        
-                        kosmaAction = sabitMixer.clipAction(filteredAnimation);
-                        kosmaAction.setLoop(THREE.LoopRepeat, Infinity);
-                        kosmaAction.clampWhenFinished = false;
-                        kosmaAction.zeroSlopeAtStart = false;
-                        kosmaAction.zeroSlopeAtEnd = false;
-                        kosmaAction.timeScale = 1.0;
-                        kosmaAction.setEffectiveTimeScale(1.0);
-                        kosmaAction.setEffectiveWeight(0.0);
-                        kosmaAction.enabled = true;
-                        kosmaAction.reset();
-                        kosmaAction.play();
-                        kosmaAction.paused = true;
-                        console.log('Kosma animation prepared (delayed, position filtered):', filteredAnimation.name);
-                    }
-                }, 1000);
+                console.error('No animations found in sabit.fbx!');
             }
             
+            // Setup model
             object.name = 'WalkingCharacter';
             characterModel = object;
             scene.add(object);
             models.push(object);
+            
+            checkComplete();
             onModelLoaded();
         },
         (progress) => {
-            console.log('Sabit model loading:', (progress.loaded / progress.total * 100) + '%');
+            console.log('Sabit model loading progress:', (progress.loaded / progress.total * 100) + '%');
             updateLoadingProgress(6, progress.loaded / progress.total);
         },
         (error) => {
-            console.error('Sabit model could not be loaded:', error);
-            addPlaceholderModel(8, 0, 8, 'WalkingCharacter', 0x00FFFF);
+            console.error('Failed to load sabit.fbx:', error);
+            addPlaceholderModel(-5, 0, 0, 'WalkingCharacter', 0x00FFFF);
+            checkComplete();
             onModelLoaded();
         }
     );
 
     // Desert Terrain Model - Büyük çöl arazisi
     fbxLoader.load(
-        './desert_terrain.fbx',        (object) => {
+        './desert_terrain.fbx',
+        (object) => {
             console.log('Desert Terrain yüklendi:', object);
-            object.position.set(0, -5, 0); // Y pozisyonu düzeltildi: -30 → -5 (daha görünür)
+            object.position.set(0, -30, 0); 
             object.scale.set(3, 1, 3);
             object.traverse((child) => {
                 if (child.isMesh) {
@@ -665,30 +665,33 @@ function loadCharacterWithAnimations() {
                         const vertices = child.geometry.attributes.position.array;
                         for (let i = 0; i < vertices.length; i += 3) {
                             // Affect Y coordinate (vertices[i+1])
-                            // Add a small random value, scaled by the terrain's overall scale
-                            const randomOffset = (Math.random() - 0.5) * 0.25; // Adjust multiplier for more/less ruggedness
+                            const randomOffset = (Math.random() - 0.5) * 0.25;
                             vertices[i+1] += randomOffset;
                         }
                         child.geometry.attributes.position.needsUpdate = true;
-                        child.geometry.computeVertexNormals(); // Important for lighting after vertex modification
+                        child.geometry.computeVertexNormals();
                     }
                 }
             });
-              object.name = 'DesertTerrain';
+            
+            object.name = 'DesertTerrain';
             desertTerrain = object;
             scene.add(object);
-            models.push(object); // Desert terrain'i models dizisine ekle
+            // Desert terrain'i models dizisine EKLEME - seçilemez olması için
+            // models.push(object); // ← Bu satırı kaldır veya yorum yap
             onModelLoaded();
-        },        (progress) => {
+        },
+        (progress) => {
             console.log('Desert Terrain yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(8, progress.loaded / progress.total); // Index 8 (son model)
-        },        (error) => {
+            updateLoadingProgress(8, progress.loaded / progress.total);
+        },
+        (error) => {
             console.error('Desert Terrain yüklenemedi:', error);
             // Hata durumunda basit bir çöl arazisi oluştur
             createFallbackTerrain();
             onModelLoaded();
         }
-    );
+    );
 }
 
 // Fallback çöl arazisi oluşturma fonksiyonu
@@ -745,6 +748,9 @@ function createFallbackTerrain() {
     // Ana terrain'i sahneye ekle
     scene.add(terrainMesh);
     desertTerrain = terrainMesh;
+    
+    // Fallback terrain'i de models dizisine EKLEME
+    // models.push(terrainMesh); // ← Bu satırı da kaldır
     
     console.log('Fallback çöl arazisi oluşturuldu');
 }
@@ -893,6 +899,12 @@ function onMouseClick(event) {
           while (clickedObject.parent && !models.includes(clickedObject)) {
             clickedObject = clickedObject.parent;
         }
+
+         // Desert terrain seçilemez olmalı - filtreleme
+        if (clickedObject.name === 'DesertTerrain' || clickedObject.name === 'FallbackDesertTerrain') {
+            console.log('Desert terrain clicked but not selectable');
+            return; // Desert terrain'e tıklandığında hiçbir işlem yapma
+        }
         
         // Sadece büyük piramit (Pyramid) için gizli mezar bulmacası - diğerleri normal seçim
         if (clickedObject.name === 'Pyramid') {
@@ -925,7 +937,7 @@ function onMouseClick(event) {
             }
             deselectModel(selectedModel);
             selectedModel = null;
-            document.getElementById('selectedModel').textContent = 'Selected Model: Yok';
+            document.getElementById('selectedModel').textContent = 'Selected Model: None';
             updateCharacterStatus();
         }
     }
@@ -1352,13 +1364,18 @@ function resetTombPuzzle() {
     // Clear all slots
     for (let i = 1; i <= 4; i++) {
         const slot = document.getElementById(`slot${i}`);
-        slot.textContent = '';
-        slot.className = 'sequence-slot';
-        
-        // Add sequence number again
-        const numberDiv = document.createElement('div');
-        numberDiv.className = 'sequence-number';
-        numberDiv.textContent = i;        slot.appendChild(numberDiv);
+        if (slot) {
+            slot.textContent = '';
+            slot.className = 'sequence-slot';
+            slot.removeAttribute('data-symbol');
+            slot.removeAttribute('data-meaning');
+            
+            // Add sequence number again
+            const numberDiv = document.createElement('div');
+            numberDiv.className = 'sequence-number';
+            numberDiv.textContent = i;
+            slot.appendChild(numberDiv);
+        }
     }
     
     // Make all hieroglyphs reusable again
@@ -1368,9 +1385,12 @@ function resetTombPuzzle() {
         h.style.pointerEvents = 'auto';
     });
     
-    // Clear status message    const statusElement = document.getElementById('puzzleStatus');
-    statusElement.textContent = '';
-    statusElement.className = 'puzzle-status';
+    // Clear status message - FIX: statusElement tanımlanması eklendi
+    const statusElement = document.getElementById('puzzleStatus');
+    if (statusElement) {
+        statusElement.textContent = '';
+        statusElement.className = 'puzzle-status';
+    }
     
     console.log('Tomb puzzle reset');
 }
@@ -1474,23 +1494,35 @@ function updateCharacterAnimation() {
     const isMoving = keys.w || keys.s || keys.a || keys.d;
     
     if (isMoving && !wasMoving) {
-        // Transition from sabit.fbx to kosma.fbx
+        // Start walking animation
         if (sabitAction && kosmaAction) {
+            console.log('Starting walking animation...');
             sabitAction.fadeOut(0.3);
-            kosmaAction.reset().fadeIn(0.3).play();
+            kosmaAction.reset().fadeIn(0.3);
             kosmaAction.paused = false;
+            kosmaAction.setEffectiveWeight(1.0);
             currentAction = kosmaAction;
-            console.log('Character started walking - kosma.fbx animation playing');
+            console.log('Walking animation active');
+        } else {
+            console.warn('Cannot start walking - animations not ready:');
+            console.log('sabitAction:', !!sabitAction);
+            console.log('kosmaAction:', !!kosmaAction);
         }
         wasMoving = true;
     } else if (!isMoving && wasMoving) {
-        // Transition from kosma.fbx to sabit.fbx
+        // Stop walking animation
         if (kosmaAction && sabitAction) {
+            console.log('Stopping walking animation...');
             kosmaAction.fadeOut(0.3);
             kosmaAction.paused = true;
-            sabitAction.reset().fadeIn(0.3).play();
+            sabitAction.reset().fadeIn(0.3);
+            sabitAction.setEffectiveWeight(1.0);
             currentAction = sabitAction;
-            console.log('Character stopped - sabit.fbx animation playing');
+            console.log('Idle animation active');
+        } else {
+            console.warn('Cannot stop walking - animations not ready:');
+            console.log('sabitAction:', !!sabitAction);
+            console.log('kosmaAction:', !!kosmaAction);
         }
         wasMoving = false;
     }
@@ -1841,8 +1873,9 @@ function createStoneTexture() {
     
     // Rastgele noktalar ekle
     for (let i = 0; i < 50; i++) {
+       
         context.fillStyle = '#654321';
-        context.fillRect(Math.random() * 256, Math.random() * 256, Math.random() * 20 + 5, Math.random() * 20 + 5);
+        context.fillRect(Math.random() * 256, Math.random() * 256, Math.random() * 20 + 5, Math.random() *  20 + 5);
     }
     
     const texture = new THREE.CanvasTexture(canvas);
