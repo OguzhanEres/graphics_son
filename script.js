@@ -288,7 +288,7 @@ function loadModels() {
     loadCamelModel();
     // Statue model
     fbxLoader.load(
-        './Statue_egypt1/fbxStatue.fbx',
+        './models/Statue_egypt1/fbxStatue.fbx',
         (object) => {
             console.log('Statue yüklendi:', object);
             object.position.set(-14, 0, 3);
@@ -331,7 +331,7 @@ function loadModels() {
     );
     
      fbxLoader.load(
-        './Free_pyramid/fbxPyra.fbx',
+        './models/Free_pyramid/fbxPyra.fbx',
         (object) => {
             console.log('Pyramid yüklendi:', object);
             object.position.set(10, 0, 0);
@@ -372,7 +372,7 @@ function loadModels() {
     
     // İkinci Piramit
     fbxLoader.load(
-        './Free_pyramid/fbxPyra.fbx',
+        './models/Free_pyramid/fbxPyra.fbx',
         (object) => {
             console.log('Pyramid2 yüklendi:', object);
             object.position.set(-5, 0, 15);
@@ -414,7 +414,7 @@ function loadModels() {
     
     // Üçüncü Piramit
     fbxLoader.load(
-        './Free_pyramid/fbxPyra.fbx',
+        './models/Free_pyramid/fbxPyra.fbx',
         (object) => {
             console.log('Pyramid3 yüklendi:', object);
             object.position.set(-10, 0, -15);
@@ -648,7 +648,7 @@ function loadCamelModel() {
     const fbxLoader = new FBXLoader();
     
     fbxLoader.load(
-        './camel/Camel.fbx',        (object) => {
+        './models/camel/Camel.fbx',        (object) => {
             console.log('Camel model loaded successfully:', object);
               // Position camel next to the character
             // Camel yönlendirmesi için rotasyon düzeltmesi - yatay pozisyon için
@@ -837,7 +837,7 @@ function loadCharacterWithAnimations() {
     
     // Load kosma.fbx first (for walking animation)
     fbxLoader.load(
-        './kosma.fbx',
+        './models/kosma.fbx',
         (object) => {
             console.log('Kosma model loaded successfully:', object);
             
@@ -875,7 +875,7 @@ function loadCharacterWithAnimations() {
 
     // Load sabit.fbx second (for idle animation and main model)
     fbxLoader.load(
-        './sabit.fbx',
+        './models/sabit.fbx',
         (object) => {
             console.log('Sabit model loaded successfully:', object);
             object.position.set(-5, 0, 0); 
@@ -965,7 +965,7 @@ function loadCharacterWithAnimations() {
 
     // Desert Terrain Model - Büyük çöl arazisi
     fbxLoader.load(
-        './desert_terrain.fbx',
+        './models/desert_terrain.fbx',
         (object) => {
             console.log('Desert Terrain yüklendi:', object);
             object.position.set(0, -30, 0); 
