@@ -450,47 +450,48 @@ function loadModels() {
     // Basitleştirilmiş animasyon sistemi ile karakter yükleme
 function loadCharacterWithAnimations() {
     const fbxLoader = new FBXLoader();
-    let loadedAnimations = 0;
-    const totalAnimations = 2; // Sadece idle ve walk
     let characterModel = null;
     
-    // Önce base model olarak Standing Idle'ı yükle
+    // First load the base character model (kosma.fbx for walking animation)
     fbxLoader.load(
-        './Female Walk.fbx',
+        './kosma.fbx',
         (object) => {
-            console.log('Kosma modeli yüklendi:', object);
+            console.log('Kosma model loaded:', object);
             
-            // Animasyonları kontrol et ve karakterModel'e bağla
+            // Check animations and store globally
             if (object.animations && object.animations.length > 0) {
-                console.log('Kosma animasyonları bulundu:', object.animations.length);
+                console.log('Kosma animations found:', object.animations.length);
                 
-                // Animasyonu global olarak saklayalım ki sabit modeli yüklenince kullanabilelim
+                // Store the walking animation globally
                 window.kosmaAnimation = object.animations[0];
                 
-                console.log('Kosma animasyon kaydedildi:', object.animations[0].name);
+                console.log('Kosma animation saved:', object.animations[0].name);
             } else {
-                console.log('Kosma animasyon bulunamadı');
+                console.log('No kosma animation found');
             }
             
-            // Modeli sahneye eklemeyelim, sadece animasyon verisi için kullanıyoruz
+            // Don't add this model to scene, just use for animation data
             onModelLoaded();
         },
         (progress) => {
-            console.log('Kosma model yükleme:', (progress.loaded / progress.total * 100) + '%');
+            console.log('Kosma model loading:', (progress.loaded / progress.total * 100) + '%');
             updateLoadingProgress(5, progress.loaded / progress.total);
         },
         (error) => {
-            console.error('Kosma model yüklenemedi:', error);
+            console.error('Kosma model could not be loaded:', error);
             onModelLoaded();
         }
-    );    // Sabit modeli (idle/durma animasyonu)
-    fbxLoader.load(        './Standing Idle.fbx',
+    );
+
+    // Load the idle character model (sabit.fbx for idle animation)
+    fbxLoader.load(
+        './sabit.fbx',
         (object) => {
-            console.log('Sabit modeli yüklendi:', object);
+            console.log('Sabit model loaded:', object);
             object.position.set(-5, 0, 0); 
             object.scale.set(0.01, 0.01, 0.01);
             
-            // Gölgeleri etkinleştir
+            // Enable shadows
             object.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
@@ -508,20 +509,26 @@ function loadCharacterWithAnimations() {
                         }
                     }
                 }
-            });            // Animasyonları kontrol et
+            });
+
+            // Check animations
             if (object.animations && object.animations.length > 0) {
-                console.log('Sabit animasyonları bulundu:', object.animations.length);
-                  // AnimationMixer oluştur
+                console.log('Sabit animations found:', object.animations.length);
+                
+                // Create AnimationMixer
                 sabitMixer = new THREE.AnimationMixer(object);
-                characterMixer = sabitMixer; // characterMixer referansını da ayarla// Sabit (idle) animasyonunu hazırla ve başlat
-                // Pozisyon track'lerini tamamen filtrele - sadece rotation ve scale kullan
+                characterMixer = sabitMixer; // Set characterMixer reference
+
+                // Prepare idle animation (from sabit.fbx)
+                // Filter position tracks - only use rotation and scale
                 const sabitFilteredTracks = object.animations[0].tracks.filter(track => {
                     return !track.name.includes('.position');
                 });
                 
-                console.log('Sabit orijinal track sayısı:', object.animations[0].tracks.length);
-                console.log('Sabit filtrelenmiş track sayısı:', sabitFilteredTracks.length);
-                  // Sabit (idle) animasyon klonu oluştur - 24 frame animasyon için optimize edildi
+                console.log('Sabit original track count:', object.animations[0].tracks.length);
+                console.log('Sabit filtered track count:', sabitFilteredTracks.length);
+
+                // Create idle animation clip
                 const sabitFilteredAnimation = new THREE.AnimationClip(
                     object.animations[0].name + '_idle',
                     object.animations[0].duration,
@@ -533,25 +540,29 @@ function loadCharacterWithAnimations() {
                 sabitAction.clampWhenFinished = false;
                 sabitAction.zeroSlopeAtStart = false;
                 sabitAction.zeroSlopeAtEnd = false;
-                sabitAction.timeScale = 1.0; // Smooth idle animasyon için
+                sabitAction.timeScale = 1.0;
                 sabitAction.setEffectiveWeight(1.0);
                 sabitAction.enabled = true;
                 sabitAction.play();
                 
-                console.log('Sabit animasyon hazırlandı ve başlatıldı:', object.animations[0].name);
+                console.log('Sabit animation prepared and started:', object.animations[0].name);
             } else {
-                console.log('Sabit animasyon bulunamadı');
-            }            // Kosma animasyonunu da bu mixer'a ekle (eğer yüklendiyse)
+                console.log('No sabit animation found');
+            }
+
+            // Add kosma animation to this mixer (if loaded)
             if (window.kosmaAnimation) {
-                console.log('Kosma animasyonunu sabit modeline bağlıyorum...');
-                  // Kosma animasyonu için tüm pozisyon track'lerini çıkar - sadece rotation ve scale kullan
+                console.log('Adding kosma animation to sabit model...');
+                
+                // Filter kosma animation tracks - remove all position tracks
                 const filteredTracks = window.kosmaAnimation.tracks.filter(track => {
-                    // Tüm pozisyon track'lerini çıkar, sadece rotation tut
                     return !track.name.includes('.position');
                 });
                 
-                console.log('Kosma orijinal track sayısı:', window.kosmaAnimation.tracks.length);
-                console.log('Kosma filtrelenmiş track sayısı:', filteredTracks.length);                // Filtrelenmiş animasyon klonu oluştur - 24 frame optimizasyonu ile
+                console.log('Kosma original track count:', window.kosmaAnimation.tracks.length);
+                console.log('Kosma filtered track count:', filteredTracks.length);
+
+                // Create filtered walking animation clip
                 const filteredAnimation = new THREE.AnimationClip(
                     window.kosmaAnimation.name + '_walking',
                     window.kosmaAnimation.duration,
@@ -563,24 +574,27 @@ function loadCharacterWithAnimations() {
                 kosmaAction.clampWhenFinished = false;
                 kosmaAction.zeroSlopeAtStart = false;
                 kosmaAction.zeroSlopeAtEnd = false;
-                kosmaAction.timeScale = 1.0; // 24 frame için optimize edilmiş hız
-                kosmaAction.setEffectiveTimeScale(1.0); // Zaman ölçeğini düzgün ayarla
+                kosmaAction.timeScale = 1.0;
+                kosmaAction.setEffectiveTimeScale(1.0);
                 kosmaAction.setEffectiveWeight(0.0);
                 kosmaAction.enabled = true;
-                kosmaAction.reset(); // Animasyonu doğru konumdan başlat
+                kosmaAction.reset();
                 kosmaAction.play();
                 kosmaAction.paused = true;
-                console.log('Kosma animasyon hazırlandı (pozisyon filtrelenmiş):', filteredAnimation.name);
+                console.log('Kosma animation prepared (position filtered):', filteredAnimation.name);
             } else {
-                console.log('Kosma animasyonu henüz yüklenmedi, daha sonra bağlanacak');
-                // Animasyon daha sonra yüklenirse bağlamak için timeout
+                console.log('Kosma animation not yet loaded, will connect later');
+                // Try to connect animation later if it loads delayed
                 setTimeout(() => {
                     if (window.kosmaAnimation && sabitMixer) {
-                        console.log('Kosma animasyonunu gecikmeli olarak bağlıyorum...');
-                          // Pozisyon track'lerini tamamen filtrele
+                        console.log('Connecting kosma animation delayed...');
+                        
+                        // Filter position tracks completely
                         const filteredTracks = window.kosmaAnimation.tracks.filter(track => {
                             return !track.name.includes('.position');
-                        });                        // Gecikmeli kosma animasyonu - 24 frame optimizasyonu ile
+                        });
+
+                        // Create delayed kosma animation
                         const filteredAnimation = new THREE.AnimationClip(
                             window.kosmaAnimation.name + '_walking_delayed',
                             window.kosmaAnimation.duration,
@@ -592,14 +606,14 @@ function loadCharacterWithAnimations() {
                         kosmaAction.clampWhenFinished = false;
                         kosmaAction.zeroSlopeAtStart = false;
                         kosmaAction.zeroSlopeAtEnd = false;
-                        kosmaAction.timeScale = 1.0; // 24 frame için optimize edilmiş hız
-                        kosmaAction.setEffectiveTimeScale(1.0); // Zaman ölçeğini düzgün ayarla
+                        kosmaAction.timeScale = 1.0;
+                        kosmaAction.setEffectiveTimeScale(1.0);
                         kosmaAction.setEffectiveWeight(0.0);
                         kosmaAction.enabled = true;
-                        kosmaAction.reset(); // Animasyonu doğru konumdan başlat
+                        kosmaAction.reset();
                         kosmaAction.play();
                         kosmaAction.paused = true;
-                        console.log('Kosma animasyon hazırlandı (gecikmeli, pozisyon filtrelenmiş):', filteredAnimation.name);
+                        console.log('Kosma animation prepared (delayed, position filtered):', filteredAnimation.name);
                     }
                 }, 1000);
             }
@@ -611,10 +625,12 @@ function loadCharacterWithAnimations() {
             onModelLoaded();
         },
         (progress) => {
-            console.log('Sabit model yükleme:', (progress.loaded / progress.total * 100) + '%');
-            updateLoadingProgress(6, progress.loaded / progress.total);        },        (error) => {
-            console.error('Sabit model yüklenemedi:', error);
-            addPlaceholderModel(8, 0, 8, 'WalkingCharacter', 0x00FFFF); // Y pozisyonu düzeltildi: -1.9 → 0
+            console.log('Sabit model loading:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(6, progress.loaded / progress.total);
+        },
+        (error) => {
+            console.error('Sabit model could not be loaded:', error);
+            addPlaceholderModel(8, 0, 8, 'WalkingCharacter', 0x00FFFF);
             onModelLoaded();
         }
     );
@@ -996,7 +1012,7 @@ function updateCharacterStatus() {
     if (statusElement) {
         if (selectedModel && selectedModel.name === 'WalkingCharacter') {
             if (keys.w || keys.a || keys.s || keys.d) {
-                statusElement.textContent = 'Character: Walkingr';
+                statusElement.textContent = 'Character: Walking';
             } else {
                 statusElement.textContent = 'Character: Standing';
             }
@@ -1453,26 +1469,28 @@ window.checkTombSequence = checkTombSequence;
 // Karakter animasyon yönetimi
 // Karakter animasyon yönetimi
 function updateCharacterAnimation() {
-    if (!characterMixer || !selectedModel || selectedModel.name !== 'WalkingCharacter') return;
+    if (!sabitMixer || !selectedModel || selectedModel.name !== 'WalkingCharacter') return;
     
     const isMoving = keys.w || keys.s || keys.a || keys.d;
     
     if (isMoving && !wasMoving) {
-        // Standing Idle.fbx'ten Female Walk.fbx'e geçiş
-        if (characterAnimations.idle && characterAnimations.walk) {
-            characterAnimations.idle.fadeOut(0.3);
-            characterAnimations.walk.reset().fadeIn(0.3).play();
-            currentAction = characterAnimations.walk;
-            console.log('Karakter yürümeye başladı - Female Walk.fbx animasyonu çalıyor');
+        // Transition from sabit.fbx to kosma.fbx
+        if (sabitAction && kosmaAction) {
+            sabitAction.fadeOut(0.3);
+            kosmaAction.reset().fadeIn(0.3).play();
+            kosmaAction.paused = false;
+            currentAction = kosmaAction;
+            console.log('Character started walking - kosma.fbx animation playing');
         }
         wasMoving = true;
     } else if (!isMoving && wasMoving) {
-        // Female Walk.fbx'ten Standing Idle.fbx'e geçiş
-        if (characterAnimations.walk && characterAnimations.idle) {
-            characterAnimations.walk.fadeOut(0.3);
-            characterAnimations.idle.reset().fadeIn(0.3).play();
-            currentAction = characterAnimations.idle;
-            console.log('Karakter durdu - Standing Idle.fbx animasyonu çalıyor');
+        // Transition from kosma.fbx to sabit.fbx
+        if (kosmaAction && sabitAction) {
+            kosmaAction.fadeOut(0.3);
+            kosmaAction.paused = true;
+            sabitAction.reset().fadeIn(0.3).play();
+            currentAction = sabitAction;
+            console.log('Character stopped - sabit.fbx animation playing');
         }
         wasMoving = false;
     }
