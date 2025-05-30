@@ -4,50 +4,47 @@ An interactive 3D desert scene built with Three.js featuring Egyptian monuments,
 
 ## 🌟 Features
 
-- **Interactive 3D Environment**: Explore a detailed desert landscape
-- **Egyptian Monuments**: Pyramids, statues, and sphinx models
-- **Character Animation System**: Walk, idle, and movement animations
-- **Dynamic Lighting**: Sun positioning and chamber lighting controls
-- **Oasis Discovery Mode**: Find hidden plants and water sources
-- **Hieroglyph Interactions**: Learn about ancient Egyptian symbols
-- **Modular Architecture**: Clean, organized, and maintainable code structure
+- **Interactive 3D Environment**: Explore a detailed desert landscape with camera controls
+- **Egyptian Monuments**: Pyramids, statues, and sphinx models with realistic textures
+- **Character Animation System**: Multiple character models with walking and idle animations
+- **Dynamic Lighting**: Sun positioning and chamber lighting controls with auto-rotation
+- **Oasis Discovery Mode**: Find hidden plants and water sources throughout the desert
+- **Hieroglyph Puzzle System**: Interactive panels with educational content
+- **Camel Tours**: Camera tours following camel caravans through the desert
+- **Tomb Exploration**: Chamber lighting system for underground exploration
 
 ## 🗂️ Project Structure
 
 ```
-├── index_new.html          # Main HTML file (updated version)
-├── package.json           # Project configuration
-├── css/                   # Stylesheets (modular)
-│   ├── base.css          # Base styles and resets
-│   ├── components/       # Component-specific styles
-│   │   ├── controls.css  # Control panel styles
-│   │   ├── hieroglyphs.css # Hieroglyph system styles
-│   │   └── oasis.css     # Oasis discovery styles
-│   └── layouts/          # Layout-specific styles
-│       └── panels.css    # Panel layouts
-├── js/                   # JavaScript modules
-│   ├── main.js          # Main application entry point
-│   ├── config.js        # Global configuration
-│   ├── controls/        # Input and character controls
-│   │   ├── InputManager.js
-│   │   └── CharacterController.js
-│   ├── loaders/         # Model and asset loaders
-│   │   └── ModelLoader.js
-│   ├── modules/         # Core game modules
-│   │   └── AnimationManager.js
-│   ├── scenes/          # Scene and lighting management
-│   │   ├── SceneManager.js
-│   │   └── LightingManager.js
-│   ├── ui/              # User interface management
-│   │   └── UIManager.js
-│   └── utils/           # Utility functions
-│       └── Utils.js
-└── models/              # 3D model assets
-    ├── desert_terrain.fbx
-    ├── Free_pyramid/
-    ├── Statue_egypt1/
-    ├── camel/
-    └── ...
+├── index.html             # Main HTML file with embedded styles
+├── script.js              # Main JavaScript application (monolithic)
+├── package.json          # Project configuration and dependencies
+├── README.md             # Project documentation
+├── aa.png                # UI asset
+├── bb.png                # UI asset
+└── models/               # 3D model assets directory
+    ├── desert_terrain.fbx           # Main terrain model
+    ├── Female Stop And Start Walking.fbx  # Character animation
+    ├── Female Walk.fbx              # Character walking animation
+    ├── Standing Idle.fbx            # Character idle animation
+    ├── Walking.fbx                  # Character walking animation
+    ├── kosma.fbx                    # Character model
+    ├── sabit.fbx                    # Character model
+    ├── camel-3ds.3DS               # Legacy camel model
+    ├── uploads_files_3835558_untitled.fbx  # Additional model
+    ├── Free_pyramid/               # Pyramid models and textures
+    │   ├── fbxPyra.fbx
+    │   └── textures/               # Pyramid texture files
+    ├── Statue_egypt1/              # Egyptian statue model
+    │   ├── fbxStatue.fbx
+    │   └── textures/               # Statue texture files
+    ├── camel/                      # Camel model with textures
+    │   ├── Camel.fbx
+    │   └── camel1.png
+    ├── yeni_camel/                 # New camel model
+    │   ├── source/
+    │   └── textures/
+    └── sphe/                       # Additional models
 ```
 
 ## 🚀 Getting Started
@@ -55,168 +52,264 @@ An interactive 3D desert scene built with Three.js featuring Egyptian monuments,
 ### Prerequisites
 
 - Modern web browser with WebGL support
-- Local web server (for loading models)
+- Local web server (required for loading FBX/3DS models due to CORS)
 
 ### Installation
 
-1. Clone or download the project
-2. Install dependencies (optional):
+1. Clone or download the project files
+2. Install dependencies (optional for development):
    ```bash
    npm install
    ```
 
 3. Start a local server:
    ```bash
-   # Using npm (if installed)
+   # Using npm (if package.json is available)
    npm start
-   
-   # Or using Python
-   python -m http.server 8080
    
    # Or using Node.js http-server
    npx http-server . -p 8080
+   
+   # Or using Python
+   python -m http.server 8080
    ```
 
-4. Open `http://localhost:8080/index_new.html` in your browser
+4. Open `http://localhost:8080/index.html` in your browser
 
 ## 🎮 Controls
 
-### Mouse Controls
-- **Left Click + Drag**: Rotate camera around scene
-- **Right Click + Drag**: Pan camera
+### Camera Controls
+- **Left Click + Drag**: Rotate camera around the scene
+- **Right Click + Drag**: Pan camera view
 - **Scroll Wheel**: Zoom in/out
-- **Click on Objects**: Select models for character control
+- **Click on Models**: Select characters for movement control
 
-### Keyboard Controls
+### Character Movement
 - **W**: Move forward
 - **A**: Move left  
 - **S**: Move backward
 - **D**: Move right
+- **Movement triggers walking animations automatically**
 
 ### UI Controls
-- **Sun Controls**: Adjust sun position and lighting
-- **Oasis Discovery**: Toggle exploration mode
-- **Hieroglyph Panels**: Click to learn about ancient symbols
-- **Chamber Lights**: Advanced lighting controls for indoor scenes
+- **Sun Controls Panel**: 
+  - Auto-rotate toggle for dynamic day/night cycle
+  - Speed slider for sun rotation
+  - Manual X, Y, Z position sliders
+  - Light intensity adjustment
+- **Oasis Discovery Panel**: 
+  - Toggle exploration mode
+  - Track found plants (0/5) and water sources (0/3)
+- **Hieroglyph Panels**: Click to reveal ancient Egyptian symbol information
+- **Chamber Lights Panel**: 
+  - Multiple light source controls
+  - Color picker for ambient lighting
+  - Position controls for chamber exploration
+- **Tour Controls**: Start automated camel caravan tours
 
-## 🎯 Features Overview
+## 🎯 Game Features
 
-### Dynamic Lighting System
-- Automatic sun movement with configurable speed
-- Manual sun positioning controls
-- Intensity adjustments
-- Chamber lighting for indoor exploration
-
-### Character Animation
-- Idle and walking animations
-- Smooth transitions between states
-- Multiple character models support
-- Speed-based animation selection
-
-### Oasis Discovery Mode
-- Find hidden plants (5 total)
-- Discover water sources (3 total)
-- Progress tracking
-- Visual feedback with ripple effects
+### Oasis Discovery System
+- **Hidden Plants**: Find 5 hidden plants scattered throughout the desert
+- **Water Sources**: Locate 3 water sources for survival
+- **Visual Feedback**: Ripple effects and UI updates when discoveries are made
+- **Progress Tracking**: Real-time counter display
 
 ### Hieroglyph Education System
-- Interactive symbol panels
-- Educational descriptions
-- Mini-puzzles for engagement
-- Ancient Egyptian cultural content
+- **Interactive Panels**: Click on hieroglyph symbols to learn
+- **Ancient Wisdom**: Educational descriptions of Egyptian symbols
+- **Cultural Learning**: Immersive way to explore ancient Egyptian culture
 
-## 🔧 Configuration
+### Character Animation System
+- **Multiple Characters**: Various character models with unique animations
+- **State Management**: Automatic switching between idle and walking states
+- **Speed-Based Animation**: Animation speed matches movement speed
+- **Smooth Transitions**: Seamless animation blending
 
-Main settings can be modified in `js/config.js`:
+### Lighting System
+- **Dynamic Sun**: Realistic sun movement with shadows
+- **Chamber Lighting**: Multiple light sources for indoor exploration
+- **Intensity Controls**: Adjustable lighting for different moods
+- **Color Customization**: RGB color picker for ambient lighting
+
+## 🔧 Technical Details
+
+### Architecture
+The current application uses a **monolithic architecture** with all functionality contained in `script.js`:
+
+- **Scene Management**: Three.js scene initialization and rendering loop
+- **Model Loading**: FBX and 3DS loader integration for 3D assets
+- **Animation System**: Character animation management with mixers and actions
+- **Input Handling**: Keyboard and mouse event management
+- **UI Controls**: Dynamic panel controls with real-time updates
+- **Game Logic**: Oasis discovery, hieroglyph puzzles, and tour systems
+
+### Key Technologies
+- **Three.js**: 3D graphics and WebGL rendering
+- **FBXLoader**: Loading animated character models
+- **TDSLoader**: Support for legacy 3DS models
+- **OrbitControls**: Camera control system
+- **ES6 Modules**: Modern JavaScript module system
+
+### Configuration
+Key settings are defined at the top of `script.js`:
 
 ```javascript
-export const CONFIG = {
-    SCENE: {
-        BACKGROUND_COLOR: 0x87CEEB,
-        FOG_NEAR: 20,
-        FOG_FAR: 100
-    },
-    LIGHTING: {
-        SUN: {
-            INITIAL_POSITION: { x: 10, y: 15, z: 10 },
-            INTENSITY: 1.2
-        }
-    },
-    ANIMATION: {
-        MOVE_SPEED: 0.15,
-        WALKING_SPEED: 0.05
-    }
-    // ... more settings
+// Movement speeds
+const moveSpeed = 0.15; // For general models
+const walkingCharacterSpeed = 0.05; // For walking characters
+
+// Model counts for loading
+const totalModels = 7; // Total expected models to load
+
+// Animation system
+let characterAnimations = {
+    idle: null,        // Standing Idle.fbx
+    walk: null         // Female Walk.fbx
 };
 ```
 
-## 🏗️ Architecture
+## 🎨 3D Assets
 
-The project follows a modular architecture pattern:
+### Model Formats Supported
+- **FBX**: Primary format for animated models and terrain
+- **3DS**: Legacy format support for older models
+- **Embedded Textures**: Automatic texture loading from model files
 
-- **SceneManager**: Handles Three.js scene initialization
-- **LightingManager**: Manages all lighting systems
-- **ModelLoader**: Loads and manages 3D models
-- **AnimationManager**: Controls character animations
-- **InputManager**: Handles user input
-- **CharacterController**: Manages character movement
-- **UIManager**: Controls user interface elements
-- **Utils**: Common utility functions
+### Model Categories
+- **Terrain**: `desert_terrain.fbx` - Main landscape
+- **Characters**: Multiple FBX files with embedded animations
+- **Architecture**: Pyramids and statues with texture materials
+- **Props**: Camels and decorative elements
 
-## 🎨 Models and Assets
-
-### Supported Formats
-- FBX files for 3D models
-- 3DS files for legacy models
-- OBJ files for simple geometry
-- PNG/JPG for textures
-
-### Model Requirements
-- Models should be optimized for web use
-- Textures should be reasonably sized (1024x1024 max recommended)
-- Animations should be embedded in FBX files
+### Texture Assets
+- High-resolution texture maps in model directories
+- Automatic material loading from FBX embedded data
+- Support for diffuse, normal, and roughness maps
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
 **Models not loading:**
-- Ensure you're running from a local server (not file://)
-- Check model file paths in `CONFIG.MODELS.PATHS`
-- Verify model files exist in the models directory
+- Ensure you're running from a local server (not `file://`)
+- Check browser console for specific loading errors
+- Verify model file paths and existence
+- Ensure FBX files are not corrupted
 
 **Performance issues:**
-- Reduce model complexity
-- Lower texture resolutions
-- Disable shadows if needed
+- Check model polygon counts (large FBX files may be heavy)
+- Monitor browser memory usage
+- Disable unused animations if experiencing lag
+- Consider reducing texture quality for older devices
+
+**Animation problems:**
+- Verify FBX files contain embedded animations
+- Check animation mixer initialization in console
+- Ensure character models have proper bone structures
 
 **Browser compatibility:**
-- Use modern browsers (Chrome, Firefox, Safari, Edge)
-- Ensure WebGL is enabled
-- Clear browser cache if issues persist
+- Use modern browsers with WebGL 2.0 support
+- Enable hardware acceleration in browser settings
+- Clear browser cache if experiencing loading issues
+- Check for Three.js version compatibility
 
-## 🔮 Future Enhancements
+### Debug Mode
+Enable debug logging by modifying the loading callbacks in `script.js`:
 
-- [ ] More character models and animations
-- [ ] Sound effects and ambient audio
-- [ ] Additional puzzle mechanics
-- [ ] Multiplayer support
-- [ ] Mobile touch controls
-- [ ] Virtual reality support
-- [ ] Procedural desert generation
+```javascript
+// Add detailed logging for troubleshooting
+console.log('Loading model:', modelPath);
+console.log('Animation available:', mixer.clipAction);
+```
 
-## 📝 License
+## 🔮 Future Development
 
-This project is licensed under the MIT License - see the package.json file for details.
+### Planned Features
+- [ ] **Modular Architecture**: Break down monolithic `script.js` into organized modules
+- [ ] **Additional Character Models**: More diverse character animations and behaviors
+- [ ] **Sound System**: Ambient desert sounds and interactive audio feedback
+- [ ] **Advanced Puzzles**: More complex hieroglyph and tomb puzzles
+- [ ] **Day/Night Cycle**: Realistic time progression with dynamic lighting
+- [ ] **Weather Effects**: Sand storms, wind, and atmospheric effects
+- [ ] **Mobile Support**: Touch controls and responsive design
+- [ ] **Multiplayer Mode**: Collaborative desert exploration
+- [ ] **Quest System**: Structured goals and achievements
+- [ ] **Inventory System**: Collectible items and tools
+
+### Technical Improvements
+- [ ] **Performance Optimization**: LOD (Level of Detail) for models
+- [ ] **Texture Streaming**: Dynamic loading of high-resolution textures
+- [ ] **Shadow Mapping**: Improved shadow quality and performance
+- [ ] **Post-Processing**: Visual effects and color grading
+- [ ] **WebXR Support**: Virtual and Augmented Reality compatibility
+
+### Content Expansion
+- [ ] **More Monuments**: Additional Egyptian architectural elements
+- [ ] **Historical Accuracy**: Research-based cultural content
+- [ ] **Educational Integration**: School curriculum compatibility
+- [ ] **Language Support**: Multi-language hieroglyph descriptions
+
+## 📝 Development Notes
+
+### Code Structure
+The current monolithic approach in `script.js` contains:
+- Scene initialization (lines 1-100)
+- Model loading system (lines 100-500)
+- Animation management (lines 500-800)
+- Input handling (lines 800-1000)
+- UI system (lines 1000-1500)
+- Game logic (lines 1500-2000)
+- Rendering loop (lines 2000+)
+
+### Recommended Refactoring
+For future maintainability, consider splitting into:
+```
+js/
+├── core/
+│   ├── Engine.js          # Scene, camera, renderer setup
+│   └── AssetLoader.js     # Model and texture loading
+├── systems/
+│   ├── AnimationManager.js # Character animation system
+│   ├── LightingSystem.js  # Dynamic lighting management
+│   └── InputManager.js    # Keyboard and mouse handling
+├── game/
+│   ├── PuzzleManager.js   # Hieroglyph and tomb puzzles
+│   └── OasisSystem.js     # Discovery mechanics
+└── ui/
+    └── UIManager.js       # Panel controls and HUD
+```
+
+## 📧 License & Credits
+
+This project is licensed under the MIT License - see the `package.json` file for details.
+
+### Model Credits
+- Egyptian models may require attribution to original creators
+- Texture assets from various sources (check individual model directories)
+- Three.js library and examples (MIT License)
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes following the modular architecture
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Test your changes thoroughly with various browsers
+4. Ensure models load correctly and animations work
+5. Submit a pull request with detailed description
 
-## 📧 Support
+### Development Guidelines
+- Follow ES6+ JavaScript standards
+- Test with local server setup
+- Verify model loading and animation functionality
+- Check browser console for errors
+- Test on multiple devices and browsers
 
-For questions or issues, please refer to the troubleshooting section or create an issue in the project repository.
+## 📞 Support
+
+For technical issues:
+1. Check the troubleshooting section above
+2. Verify local server setup
+3. Check browser console for error messages
+4. Ensure all model files are present and accessible
+
+For questions about Egyptian history or cultural content, please consult appropriate educational resources.
