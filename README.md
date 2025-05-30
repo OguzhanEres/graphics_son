@@ -8,9 +8,7 @@ An interactive 3D desert scene built with Three.js featuring Egyptian monuments,
 - **Egyptian Monuments**: Pyramids, statues, and sphinx models with realistic textures
 - **Character Animation System**: Multiple character models with walking and idle animations
 - **Dynamic Lighting**: Sun positioning and chamber lighting controls with auto-rotation
-- **Oasis Discovery Mode**: Find hidden plants and water sources throughout the desert
 - **Hieroglyph Puzzle System**: Interactive panels with educational content
-- **Camel Tours**: Camera tours following camel caravans through the desert
 - **Tomb Exploration**: Chamber lighting system for underground exploration
 
 ## 🗂️ Project Structure
@@ -108,12 +106,6 @@ An interactive 3D desert scene built with Three.js featuring Egyptian monuments,
 - **Tour Controls**: Start automated camel caravan tours
 
 ## 🎯 Game Features
-
-### Oasis Discovery System
-- **Hidden Plants**: Find 5 hidden plants scattered throughout the desert
-- **Water Sources**: Locate 3 water sources for survival
-- **Visual Feedback**: Ripple effects and UI updates when discoveries are made
-- **Progress Tracking**: Real-time counter display
 
 ### Hieroglyph Education System
 - **Interactive Panels**: Click on hieroglyph symbols to learn
