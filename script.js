@@ -15,8 +15,18 @@ const keys = { w: false, a: false, s: false, d: false };
 const moveSpeed = 0.15; // For other models
 const walkingCharacterSpeed = 0.05; // Minimum speed for walking character
 let loadedModels = 0;
-const totalModels = 6; // Statue + 3 Piramit + WalkingCharacter + DesertTerrain
-
+const totalModels = 7; // Statue + 3 Piramit + WalkingCharacter + DesertTerrain
+let camelModel = null;
+let camelMixer = null;
+let camelIdleAction = null;
+let camelWalkAction = null;
+let camelWasMoving = false;
+// Camel caravan variables
+let camelCaravan = [];
+let camelCaravanMixers = [];
+let camelCaravanIdleActions = [];
+let camelCaravanWalkActions = [];
+let camelCaravanWasMoving = [];
 // New variables for animation
 let mixer; // Animation mixer for Hurricane_Kick
 let walkAction; // Hurricane_Kick walking animation
@@ -275,7 +285,7 @@ function createGround() {
 function loadModels() {
     const fbxLoader = new FBXLoader();
     const tdsLoader = new TDSLoader(); // 3DS dosyaları için
-    
+    loadCamelModel();
     // Statue model
     fbxLoader.load(
         './Statue_egypt1/fbxStatue.fbx',
@@ -446,6 +456,325 @@ function loadModels() {
 
     // Animasyonlu Walking model - Yeni animasyon sistemi ile
     loadCharacterWithAnimations();
+}
+function positionCamelOnTerrain(camelObject) {
+    // Get the camel's bounding box AFTER rotation to find the actual bottom
+    const box = new THREE.Box3().setFromObject(camelObject);
+    const camelHeight = box.max.y - box.min.y;
+    const camelBottom = box.min.y;
+    
+    console.log('Positioning camel on terrain:');
+    console.log('- Current position:', camelObject.position);
+    console.log('- Camel bottom Y:', camelBottom);
+    console.log('- Camel height:', camelHeight);
+    
+    // Create a raycaster to detect ground level
+    const raycaster = new THREE.Raycaster();
+    const downDirection = new THREE.Vector3(0, -1, 0);
+    
+    // Cast ray from above the camel position downward
+    const rayStart = new THREE.Vector3(camelObject.position.x, camelObject.position.y + 10, camelObject.position.z);
+    raycaster.set(rayStart, downDirection);
+    
+    // Check intersection with ground plane
+    const intersects = raycaster.intersectObject(plane);
+      if (intersects.length > 0) {
+        // Position camel so its feet touch the ground
+        const groundY = intersects[0].point.y;
+        const adjustmentY = groundY - camelBottom;
+        camelObject.position.y = camelObject.position.y + adjustmentY + 0.2; // Small offset to avoid z-fighting
+        
+        console.log('- Ground Y:', groundY);
+        console.log('- Adjustment Y:', adjustmentY);
+        console.log('- Final camel Y position:', camelObject.position.y);
+        
+        // Yatay pozisyonu korumak için X rotasyonunu kontrol et
+        if (camelObject.name === 'Camel') {
+            camelObject.rotation.x = -Math.PI / 2; // Deve modelinin yatay pozisyonunu koru
+        }
+    } else {
+        // Default ground level if no intersection - position based on bounding box
+        camelObject.position.y = -camelBottom + 0.2;
+        console.log('- No ground intersection, using default positioning');
+        console.log('- Final camel Y position:', camelObject.position.y);
+        
+        // Yatay pozisyonu korumak için X rotasyonunu kontrol et
+        if (camelObject.name === 'Camel') {
+            camelObject.rotation.x = -Math.PI / 2; // Deve modelinin yatay pozisyonunu koru
+        }
+    }
+    
+    // Final verification
+    const finalBox = new THREE.Box3().setFromObject(camelObject);
+    console.log('- Final bottom Y after positioning:', finalBox.min.y);
+}
+// Function to setup camel animations
+function setupCamelAnimations(camelObject) {
+    camelMixer = new THREE.AnimationMixer(camelObject);
+    
+    // Find idle and walk animations
+    camelObject.animations.forEach((clip, index) => {
+        console.log(`Camel animation ${index}: ${clip.name}`);
+        
+        const action = camelMixer.clipAction(clip);
+        
+        // Identify animation types based on name
+        if (clip.name.toLowerCase().includes('idle') || 
+            clip.name.toLowerCase().includes('stand') ||
+            index === 0) { // First animation as idle fallback
+            camelIdleAction = action;
+            action.play();
+            console.log('Camel idle animation set:', clip.name);
+        } else if (clip.name.toLowerCase().includes('walk') ||
+                   clip.name.toLowerCase().includes('run') ||
+                   index === 1) { // Second animation as walk fallback
+            camelWalkAction = action;
+            action.setEffectiveWeight(0);
+            action.play();
+            action.paused = true;
+            console.log('Camel walk animation set:', clip.name);
+        }
+    });
+    
+    // If no specific animations found, use first two available
+    if (!camelIdleAction && camelObject.animations.length > 0) {
+        camelIdleAction = camelMixer.clipAction(camelObject.animations[0]);
+        camelIdleAction.play();
+    }
+    
+    if (!camelWalkAction && camelObject.animations.length > 1) {
+        camelWalkAction = camelMixer.clipAction(camelObject.animations[1]);
+        camelWalkAction.setEffectiveWeight(0);
+        camelWalkAction.play();
+        camelWalkAction.paused = true;
+    }
+}
+
+// Function to create placeholder camel if model fails to load
+function addPlaceholderCamel() {
+    console.log('Creating placeholder camel...');
+    
+    const camelGroup = new THREE.Group();
+    
+    // Create a more detailed camel-like shape
+    const bodyGeometry = new THREE.CylinderGeometry(0.8, 1.0, 3, 12);
+    const bodyMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xD2B48C,
+        roughness: 0.8,
+        metalness: 0.1
+    });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.position.y = 1.5;
+    body.rotation.z = Math.PI / 2; // Horizontal body
+    
+    // Camel hump - make it more prominent
+    const humpGeometry = new THREE.SphereGeometry(0.6, 12, 12);
+    const hump = new THREE.Mesh(humpGeometry, bodyMaterial);
+    hump.position.set(0, 2.3, -0.5);
+    hump.scale.set(1, 0.8, 1.2);
+    
+    // Camel neck - longer and more realistic
+    const neckGeometry = new THREE.CylinderGeometry(0.3, 0.4, 2, 12);
+    const neck = new THREE.Mesh(neckGeometry, bodyMaterial);
+    neck.position.set(0, 2.5, 1.5);
+    neck.rotation.x = -0.4;
+    
+    // Camel head - more detailed
+    const headGeometry = new THREE.BoxGeometry(0.6, 0.8, 1.2);
+    const head = new THREE.Mesh(headGeometry, bodyMaterial);
+    head.position.set(0, 3.2, 2.5);
+    
+    // Camel ears
+    const earGeometry = new THREE.ConeGeometry(0.15, 0.4, 6);
+    const leftEar = new THREE.Mesh(earGeometry, bodyMaterial);
+    leftEar.position.set(-0.3, 3.6, 2.3);
+    leftEar.rotation.z = 0.3;
+    
+    const rightEar = new THREE.Mesh(earGeometry, bodyMaterial);
+    rightEar.position.set(0.3, 3.6, 2.3);
+    rightEar.rotation.z = -0.3;
+    
+    // Camel legs - more realistic proportions
+    const legGeometry = new THREE.CylinderGeometry(0.15, 0.2, 2.5, 8);
+    const legPositions = [
+        { x: -0.6, z: 1.0 },  // Front left
+        { x: 0.6, z: 1.0 },   // Front right
+        { x: -0.6, z: -1.0 }, // Back left
+        { x: 0.6, z: -1.0 }   // Back right
+    ];
+    
+    const legs = [];
+    legPositions.forEach((pos, index) => {
+        const leg = new THREE.Mesh(legGeometry, bodyMaterial);
+        leg.position.set(pos.x, 1.25, pos.z);
+        legs.push(leg);
+        camelGroup.add(leg);
+    });
+    
+    // Camel tail
+    const tailGeometry = new THREE.CylinderGeometry(0.08, 0.15, 1, 6);
+    const tail = new THREE.Mesh(tailGeometry, bodyMaterial);
+    tail.position.set(0, 1.8, -2.2);
+    tail.rotation.x = 0.5;
+    
+    // Add all parts to the group
+    camelGroup.add(body);
+    camelGroup.add(hump);
+    camelGroup.add(neck);
+    camelGroup.add(head);
+    camelGroup.add(leftEar);
+    camelGroup.add(rightEar);
+    camelGroup.add(tail);
+    
+    // Enable shadows for all parts
+    camelGroup.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+    
+    // Position placeholder camel right next to character
+    camelGroup.position.set(-3, -8, 0); // Right next to character at (-5, 0, 0)
+    camelGroup.scale.set(0.8, 0.8, 0.8); // Appropriate size
+    camelGroup.name = 'Camel';
+    camelModel = camelGroup;
+    scene.add(camelGroup);
+    models.push(camelGroup);
+    
+    console.log('Detailed placeholder camel created next to character');
+}
+function loadCamelModel() {
+    const fbxLoader = new FBXLoader();
+    
+    fbxLoader.load(
+        './camel/Camel.fbx',        (object) => {
+            console.log('Camel model loaded successfully:', object);
+              // Position camel next to the character
+            // Camel yönlendirmesi için rotasyon düzeltmesi - yatay pozisyon için
+            object.rotation.x = -Math.PI / 2; // Modeli yatay yapmak için X ekseni etrafında döndür
+            object.rotation.y = 0; // Y rotasyonunu sıfırla  
+            object.rotation.z = 0; // Z rotasyonunu sıfırla
+            object.position.set(-3, -1, 0);
+            
+            // Scale camel to be proportional but slightly larger than human
+            object.scale.set(0.8, 0.8, 0.8);
+            
+            // Load and apply the camel1.png texture
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(
+                './yeni_camel/camel.blend',
+                (texture) => {
+                    console.log('Camel texture loaded successfully');
+                    
+                    // Configure texture properties
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.flipY = false;
+                    
+                    // Apply texture to all mesh materials
+                    object.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    child.material.forEach(mat => {
+                                        // Apply the camel texture
+                                        mat.map = texture;
+                                        mat.side = THREE.DoubleSide;
+                                        mat.needsUpdate = true;
+                                        
+                                        // Set material properties for better appearance
+                                        mat.roughness = 0.8;
+                                        mat.metalness = 0.1;
+                                        
+                                        console.log('Texture applied to material array element');
+                                    });
+                                } else {
+                                    // Apply the camel texture
+                                    child.material.map = texture;
+                                    child.material.side = THREE.DoubleSide;
+                                    child.material.needsUpdate = true;
+                                    
+                                    // Set material properties for better appearance
+                                    child.material.roughness = 0.8;
+                                    child.material.metalness = 0.1;
+                                    
+                                    console.log('Texture applied to single material');
+                                }
+                            }
+                        }
+                    });
+                    
+                    console.log('Camel texture successfully applied to all materials');
+                },
+                (progress) => {
+                    console.log('Camel texture loading progress:', (progress.loaded / progress.total * 100) + '%');
+                },
+                (error) => {
+                    console.error('Failed to load camel texture:', error);
+                    
+                    // Apply fallback material if texture fails
+                    object.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(mat => {
+                                    mat.color.setHex(0xD2B48C); // Sandy brown color
+                                    mat.roughness = 0.8;
+                                    mat.metalness = 0.1;
+                                });
+                            } else {
+                                child.material.color.setHex(0xD2B48C);
+                                child.material.roughness = 0.8;
+                                child.material.metalness = 0.1;
+                            }
+                        }
+                    });
+                    console.log('Applied fallback camel color');
+                }
+            );
+            
+            // Position camel feet on terrain
+            positionCamelOnTerrain(object);
+              // Setup camel animations if available
+            if (object.animations && object.animations.length > 0) {
+                console.log('Camel animations found:', object.animations.length);
+                setupCamelAnimations(object);
+            }
+            
+            // İsmi net şekilde ayarla
+            object.name = 'Camel';
+            
+            // Belirtilen mesh'lerin de isimlerini ayarla ki raycaster daha iyi çalışsın
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.name = 'CamelMesh';
+                }
+            });
+            
+            // Global değişkene kaydet
+            camelModel = object;
+            
+            // Sahneye ekle ve seçilebilir modeller listesine ekle
+            scene.add(object);
+            models.push(object);
+            
+            console.log('Camel model added to scene and models array');
+            onModelLoaded();
+        },
+        (progress) => {
+            console.log('Camel loading progress:', (progress.loaded / progress.total * 100) + '%');
+            updateLoadingProgress(7, progress.loaded / progress.total);
+        },
+        (error) => {
+            console.error('Failed to load Camel model:', error);
+            // Create placeholder camel
+            addPlaceholderCamel();
+            onModelLoaded();
+        }
+    );
 }
 
     // Basitleştirilmiş animasyon sistemi ile karakter yükleme
@@ -893,11 +1222,27 @@ function onMouseClick(event) {
     
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(models, true);
-    
+      console.log('Mouse click - intersects:', intersects.length);
     if (intersects.length > 0) {
+        console.log('Intersected object:', intersects[0].object.name || 'Unnamed');
+        console.log('Intersected object parent:', intersects[0].object.parent ? intersects[0].object.parent.name || 'Unnamed parent' : 'No parent');
+        
         let clickedObject = intersects[0].object;
-          while (clickedObject.parent && !models.includes(clickedObject)) {
+        while (clickedObject.parent && !models.includes(clickedObject)) {
             clickedObject = clickedObject.parent;
+            console.log('Moving up to parent:', clickedObject.name || 'Unnamed');
+        }
+
+        // Özel camel kontrolü - eğer CamelMesh mesh'ine tıklandıysa
+        if (intersects[0].object.name === 'CamelMesh') {
+            console.log('Camel mesh detected - finding camel model');
+            // Scene'de Camel adlı modeli bul
+            scene.traverse((object) => {
+                if (object.name === 'Camel') {
+                    console.log('Camel model found, selecting it');
+                    clickedObject = object;
+                }
+            });
         }
 
          // Desert terrain seçilemez olmalı - filtreleme
@@ -920,6 +1265,11 @@ function onMouseClick(event) {
             if (selectedModel.name === 'WalkingCharacter') {
                 // Yeni sistemde animasyon otomatik olarak yönetiliyor
                 wasMoving = false;            }
+                  if (selectedModel.name === 'WalkingCharacter') {
+                wasMoving = false;
+            } else if (selectedModel.name === 'Camel') {
+                camelWasMoving = false;
+            }
             deselectModel(selectedModel);
         }
         
@@ -1028,8 +1378,20 @@ function updateCharacterStatus() {
             } else {
                 statusElement.textContent = 'Character: Standing';
             }
+        } else if (selectedModel && selectedModel.name === 'Camel') {
+            if (keys.w || keys.a || keys.s || keys.d) {
+                statusElement.textContent = 'Camel: Walking';
+            } else {
+                statusElement.textContent = 'Camel: Standing';
+            }
+        } else if (selectedModel) {
+            if (keys.w || keys.a || keys.s || keys.d) {
+                statusElement.textContent = `${selectedModel.name}: Moving`;
+            } else {
+                statusElement.textContent = `${selectedModel.name}: Selected`;
+            }
         } else {
-            statusElement.textContent = 'Character: Not Selected';
+            statusElement.textContent = 'Model: Not Selected';
         }
     }
 }
@@ -1051,14 +1413,24 @@ function updateSelectedModel() {
     if (selectedModel.name === 'WalkingCharacter') {
         updateCharacterAnimation();
     }
-    
+    else if (selectedModel.name === 'Camel') {
+        updateCamelAnimation();
+    }
       // Sadece hareket tuşları basılıysa modeli hareket ettir
     if (keys.w || keys.s || keys.a || keys.d) {
         moveVector.y = 0;
-        moveVector.normalize();
-          // Karakterin hareket yönüne dönmesi - daha yumuşak
+        moveVector.normalize();        // Karakterin hareket yönüne dönmesi - daha yumuşak
         if (moveVector.length() > 0) {
-            const targetAngle = Math.atan2(moveVector.x, moveVector.z);
+            // Devenin yatay pozisyonuna göre rotasyon ayarlaması
+            let targetAngle;
+            if (selectedModel.name === 'Camel') {
+                // Deve modeli yatay olduğu için hareket yönüne göre özel açı hesaplaması
+                targetAngle = Math.atan2(moveVector.x, moveVector.z);
+            } else {
+                // Diğer modeller için normal açı hesaplaması
+                targetAngle = Math.atan2(moveVector.x, moveVector.z);
+            }
+            
             // Daha yumuşak dönüş için lerp kullan
             const currentAngle = selectedModel.rotation.y;
             let angleDiff = targetAngle - currentAngle;
@@ -1066,9 +1438,18 @@ function updateSelectedModel() {
             // Açı farkını -π ile π arasında tut
             while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
             while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-            
-            // Daha yumuşak interpolasyon faktörü
-            selectedModel.rotation.y = currentAngle + angleDiff * 0.08;
+              // Camel için özel rotasyon düzeltmesi
+            if (selectedModel.name === 'Camel') {
+                // Camel modeli yatay (-Math.PI/2 X rotasyonu) olduğu için,
+                // Y rotasyonu farklı şekilde uygulanmalı
+                selectedModel.rotation.y = currentAngle + angleDiff * 0.08;
+                
+                // X rotasyonunu koruyalım (yatay pozisyon için)
+                selectedModel.rotation.x = -Math.PI / 2;
+            } else {
+                // Diğer modeller için normal rotasyon
+                selectedModel.rotation.y = currentAngle + angleDiff * 0.08;
+            }
         }
         
         // Walking karakteri için özel yavaş hız kullan
@@ -1080,9 +1461,38 @@ function updateSelectedModel() {
         const maxDistance = 23;
         selectedModel.position.x = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.x));
         selectedModel.position.z = Math.max(-maxDistance, Math.min(maxDistance, selectedModel.position.z));
+          if (selectedModel.name === 'Camel') {
+            positionCamelOnTerrain(selectedModel);
+        }
     }
 }
-
+function updateCamelAnimation() {
+    if (!camelMixer || !camelModel || selectedModel !== camelModel) return;
+    
+    const isMoving = keys.w || keys.s || keys.a || keys.d;
+    
+    if (isMoving && !camelWasMoving) {
+        // Start walking animation
+        if (camelIdleAction && camelWalkAction) {
+            console.log('Camel starting to walk...');
+            camelIdleAction.fadeOut(0.3);
+            camelWalkAction.reset().fadeIn(0.3);
+            camelWalkAction.paused = false;
+            camelWalkAction.setEffectiveWeight(1.0);
+        }
+        camelWasMoving = true;
+    } else if (!isMoving && camelWasMoving) {
+        // Stop walking animation
+        if (camelWalkAction && camelIdleAction) {
+            console.log('Camel stopping...');
+            camelWalkAction.fadeOut(0.3);
+            camelWalkAction.paused = true;
+            camelIdleAction.reset().fadeIn(0.3);
+            camelIdleAction.setEffectiveWeight(1.0);
+        }
+        camelWasMoving = false;
+    }
+}
 function animate() {
     requestAnimationFrame(animate);
       // Animasyon mixer'larını güncelle - delta clamping ile
@@ -1092,6 +1502,9 @@ function animate() {
     }
     if (sabitMixer && sabitMixer !== characterMixer) {
         sabitMixer.update(delta);
+    }
+    if (camelMixer) {
+        camelMixer.update(delta);
     }
     
     // Update automatic rotating light system
